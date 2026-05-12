@@ -13,14 +13,14 @@ const Footer = () => {
                 alt="Photobooth"
                 width={116}
                 height={92}
-                className="h-auto w-28 dark:hidden"
+                className="h-auto w-28 dark:hidden object-none"
               />
               <Image
                 src="/main-logo-dark-theme.png"
                 alt="Photobooth"
                 width={116}
                 height={92}
-                className="hidden h-auto w-28 dark:block"
+                className="hidden h-auto w-28 dark:block object-none"
               />
             </Link>
             <p className="mt-4 text-sm leading-6 text-muted-foreground">
