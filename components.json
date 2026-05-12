@@ -22,6 +22,8 @@
     "hooks": "@/hooks"
   },
   "registries": {
-    "@clerk": "https://clerk.com/r/{name}.json"
+    "@clerk": "https://clerk.com/r/{name}.json",
+    "@aceternity": "https://ui.aceternity.com/registry/{name}.json",
+    "@magicui": "https://magicui.design/r/{name}"
   }
 }

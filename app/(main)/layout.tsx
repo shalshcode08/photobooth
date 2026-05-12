@@ -6,9 +6,9 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="photobooth-page-surface flex min-h-dvh flex-col">
       <AppHeader />
       {children}
-    </>
+    </div>
   );
 }
