@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useCameraStore } from "@/store/cameraStore";
 import { cn } from "@/lib/utils";
 
-const FILTERS = [
+export const FILTERS = [
   { id: "none", label: "None", style: "" },
   { id: "bw", label: "B&W", style: "grayscale(100%)" },
   { id: "sepia", label: "Sepia", style: "sepia(80%)" },
@@ -14,7 +14,7 @@ const FILTERS = [
 ];
 
 export default function FilterSelector() {
-  const [selected, setSelected] = useState("none");
+  const { activeFilter, setActiveFilter } = useCameraStore();
 
   return (
     <div className="w-full max-w-lg">
@@ -25,10 +25,10 @@ export default function FilterSelector() {
         {FILTERS.map((filter) => (
           <button
             key={filter.id}
-            onClick={() => setSelected(filter.id)}
+            onClick={() => setActiveFilter(filter.style)}
             className={cn(
               "flex shrink-0 flex-col items-center gap-1.5 rounded-md border p-1.5 transition-colors",
-              selected === filter.id
+              activeFilter === filter.style
                 ? "border-primary bg-primary/5"
                 : "border-border bg-muted hover:border-muted-foreground/40",
             )}

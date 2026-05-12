@@ -11,16 +11,30 @@ import FilterSelector from "@/components/appComponents/FilterSelector";
 export default function BoothCamera() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const { enabled, setEnabled } = useCameraStore();
+  const { enabled, setEnabled, activeFilter, addPhoto } = useCameraStore();
   const [flashing, setFlashing] = useState(false);
   const [ripple, setRipple] = useState(0);
 
   const handleCapture = useCallback(() => {
+    if (!videoRef.current || !enabled) return;
     new Audio("/sound/camera-sound.mp3").play();
     setFlashing(true);
     setRipple((n) => n + 1);
     setTimeout(() => setFlashing(false), 350);
-  }, []);
+
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    // Mirror to match the flipped video display
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    if (activeFilter) ctx.filter = activeFilter;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    addPhoto(canvas.toDataURL("image/jpeg", 0.85));
+  }, [enabled, activeFilter, addPhoto]);
 
   const startCamera = useCallback(async () => {
     try {
@@ -40,7 +54,6 @@ export default function BoothCamera() {
     setEnabled(false);
   }, [setEnabled]);
 
-  // Auto-start if camera was already enabled before navigating here
   useEffect(() => {
     if (enabled) startCamera();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,6 +82,7 @@ export default function BoothCamera() {
             autoPlay
             playsInline
             muted
+            style={{ filter: activeFilter || undefined }}
             className="h-full w-full object-cover [-webkit-transform:scaleX(-1)] [transform:scaleX(-1)]"
           />
           {!enabled && (

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import BoothCamera from "@/components/appComponents/BoothCamera";
+import PhotoGallery from "@/components/appComponents/PhotoGallery";
 import { cn } from "@/lib/utils";
 
 export default function BoothPage() {
@@ -32,8 +33,11 @@ export default function BoothPage() {
           priority
         />
       </div>
-      <div className="relative z-10 flex flex-1 flex-col">
+      <div className="relative z-10 flex flex-1 overflow-hidden">
         <BoothCamera />
+        <div className="absolute right-0 top-0 bottom-0 flex items-center">
+          <PhotoGallery />
+        </div>
       </div>
     </div>
   );
