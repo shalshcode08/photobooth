@@ -1,3 +1,4 @@
+import CatShowcaseSection from "@/components/appComponents/CatShowcaseSection";
 import FeatureSection from "@/components/appComponents/FeatureSection";
 import Footer from "@/components/appComponents/Footer";
 import HeroSection from "@/components/appComponents/HeroSection";
@@ -12,6 +13,9 @@ export default function Home() {
         <PageScrollMotion>
           <HeroSection />
           <FeatureSection />
+        </PageScrollMotion>
+        <CatShowcaseSection />
+        <PageScrollMotion>
           <ShowcaseSection />
           <ProcessSection />
           <Footer />

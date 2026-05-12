@@ -48,6 +48,7 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="light"
           enableSystem
+          enableColorScheme={false}
           disableTransitionOnChange
         >
           <ClerkProvider>{children}</ClerkProvider>
