@@ -54,13 +54,13 @@ export default function BoothCamera() {
     setEnabled(false);
   }, [setEnabled]);
 
+  // Fires whenever enabled becomes true — handles both navigation and post-hydration restore
   useEffect(() => {
-    if (enabled) startCamera();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (enabled && !streamRef.current) startCamera();
+  }, [enabled, startCamera]);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
+    <div className="flex flex-1 flex-col items-center justify-start gap-4 p-4 lg:justify-center lg:p-6">
       <div className="relative w-full max-w-lg">
         <Image
           src="/stickers/look-here.svg"

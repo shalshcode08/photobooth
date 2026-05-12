@@ -33,10 +33,19 @@ export default function BoothPage() {
           priority
         />
       </div>
-      <div className="relative z-10 flex flex-1 overflow-hidden">
+      {/* Desktop */}
+      <div className="relative z-10 hidden flex-1 overflow-hidden lg:flex">
         <BoothCamera />
-        <div className="absolute right-0 top-0 bottom-0 flex items-center">
+        <div className="absolute bottom-0 right-0 top-0 flex items-center">
           <PhotoGallery />
+        </div>
+      </div>
+
+      {/* Mobile — no scroll, fits in h-dvh */}
+      <div className="relative z-10 flex flex-1 min-h-0 flex-col overflow-hidden lg:hidden">
+        <BoothCamera />
+        <div className="shrink-0">
+          <PhotoGallery compact />
         </div>
       </div>
     </div>
