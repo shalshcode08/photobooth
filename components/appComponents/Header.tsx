@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import ThemeToggle from "./ThemeToggle";
+// import ThemeToggle from "./ThemeToggle";
 
 const AppHeader = () => {
   return (
@@ -12,23 +12,23 @@ const AppHeader = () => {
           <Image
             src="/main-logo-light-theme.png"
             alt="Photobooth"
-            width={150}
-            height={100}
-            className="dark:hidden"
+            width={100}
+            height={80}
+            className="dark:hidden w-auto"
             priority
           />
           <Image
             src="/main-logo-dark-theme.png"
             alt="Photobooth"
-            width={150}
-            height={100}
-            className="hidden dark:block"
+            width={100}
+            height={80}
+            className="hidden dark:block w-auto"
             priority
           />
         </Link>
 
         <div className="flex items-center gap-3">
-          <ThemeToggle />
+          {/* <ThemeToggle /> */}
           <Button asChild>
             <Link href="/sign-up">
               Get Started <ArrowRight />
