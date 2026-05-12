@@ -7,8 +7,10 @@ interface CameraStore {
   photos: string[];
   addPhoto: (dataUrl: string) => void;
   removePhoto: (index: number) => void;
-  activeFilter: string;
-  setActiveFilter: (filter: string) => void;
+  activeFilterId: string;
+  setActiveFilterId: (id: string) => void;
+  flashEnabled: boolean;
+  setFlashEnabled: (enabled: boolean) => void;
 }
 
 export const useCameraStore = create<CameraStore>()(
@@ -18,14 +20,20 @@ export const useCameraStore = create<CameraStore>()(
       setEnabled: (enabled) => set({ enabled }),
       photos: [],
       addPhoto: (dataUrl) => set((s) => ({ photos: [...s.photos, dataUrl] })),
-      removePhoto: (index) => set((s) => ({ photos: s.photos.filter((_, i) => i !== index) })),
-      activeFilter: "",
-      setActiveFilter: (filter) => set({ activeFilter: filter }),
+      removePhoto: (index) =>
+        set((s) => ({ photos: s.photos.filter((_, i) => i !== index) })),
+      activeFilterId: "none",
+      setActiveFilterId: (id) => set({ activeFilterId: id }),
+      flashEnabled: false,
+      setFlashEnabled: (enabled) => set({ flashEnabled: enabled }),
     }),
     {
       name: "camera-store",
-      // only persist enabled and activeFilter — photos are large data URLs, keep in-memory only
-      partialize: (state) => ({ enabled: state.enabled, activeFilter: state.activeFilter }),
+      partialize: (state) => ({
+        enabled: state.enabled,
+        activeFilterId: state.activeFilterId,
+        flashEnabled: state.flashEnabled,
+      }),
     },
   ),
 );

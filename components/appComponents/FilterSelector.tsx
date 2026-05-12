@@ -1,20 +1,11 @@
 "use client";
 
 import { useCameraStore } from "@/store/cameraStore";
+import { FILTERS } from "@/lib/filters";
 import { cn } from "@/lib/utils";
 
-export const FILTERS = [
-  { id: "none", label: "None", style: "" },
-  { id: "bw", label: "B&W", style: "grayscale(100%)" },
-  { id: "sepia", label: "Sepia", style: "sepia(80%)" },
-  { id: "warm", label: "Warm", style: "sepia(30%) saturate(140%) brightness(105%)" },
-  { id: "cool", label: "Cool", style: "hue-rotate(20deg) saturate(120%)" },
-  { id: "fade", label: "Fade", style: "brightness(110%) contrast(85%) saturate(80%)" },
-  { id: "vivid", label: "Vivid", style: "saturate(180%) contrast(110%)" },
-];
-
 export default function FilterSelector() {
-  const { activeFilter, setActiveFilter } = useCameraStore();
+  const { activeFilterId, setActiveFilterId } = useCameraStore();
 
   return (
     <div className="w-full max-w-lg">
@@ -25,18 +16,23 @@ export default function FilterSelector() {
         {FILTERS.map((filter) => (
           <button
             key={filter.id}
-            onClick={() => setActiveFilter(filter.style)}
+            onClick={() => setActiveFilterId(filter.id)}
             className={cn(
               "flex shrink-0 flex-col items-center gap-1.5 rounded-md border p-1.5 transition-colors",
-              activeFilter === filter.style
+              activeFilterId === filter.id
                 ? "border-primary bg-primary/5"
                 : "border-border bg-muted hover:border-muted-foreground/40",
             )}
           >
-            <div
-              className="h-12 w-12 rounded bg-gradient-to-br from-rose-300 via-amber-200 to-sky-300"
-              style={{ filter: filter.style }}
-            />
+            <div className="h-12 w-12 overflow-hidden rounded">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/cats-showcase/cat-5.jpg"
+                alt={filter.label}
+                className="h-full w-full object-cover"
+                style={{ filter: filter.cssPreview || undefined }}
+              />
+            </div>
             <span className="text-[10px] font-medium text-foreground">
               {filter.label}
             </span>
