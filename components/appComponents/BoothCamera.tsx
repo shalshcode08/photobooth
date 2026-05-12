@@ -5,9 +5,9 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { VideoIcon, VideoOffIcon, TimerIcon, ZapIcon, ZapOffIcon } from "lucide-react";
-import Image from "next/image";
-import { useCameraStore } from "@/store/cameraStore";
+import { MAX_PHOTOS, useCameraStore } from "@/store/cameraStore";
 import FilterSelector from "@/components/appComponents/FilterSelector";
+import ScatteredStickers from "@/components/appComponents/ScatteredStickers";
 import P5VideoFilter, {
   type P5FilterHandle,
 } from "@/components/appComponents/P5VideoFilter";
@@ -49,12 +49,15 @@ export default function BoothCamera() {
   const wantCameraRef = useRef(false);   // flipped to false by stopCamera so an
                                          // in-flight getUserMedia aborts on resolve
 
-  const { enabled, setEnabled, activeFilterId, addPhoto, flashEnabled, setFlashEnabled } = useCameraStore();
+  const { enabled, setEnabled, activeFilterId, addPhoto, photos, flashEnabled, setFlashEnabled } = useCameraStore();
+  const remainingSlots = MAX_PHOTOS - photos.length;
+  const atMaxPhotos    = remainingSlots <= 0;
   const [screenFlashPhase, setScreenFlashPhase] = useState<"off"|"hold"|"fade">("off");
   const [shutterFlash, setShutterFlash] = useState(false);
   const [ripple,         setRipple]         = useState(0);
   const [burstActive,    setBurstActive]    = useState(false);
-  const [burstShot,      setBurstShot]      = useState(0);      // 1–4, current shot #
+  const [burstShot,      setBurstShot]      = useState(0);      // 1..burstTotal
+  const [burstTotal,     setBurstTotal]     = useState(0);      // shots this burst will fire (≤ BURST_SHOTS)
   const [burstCountdown, setBurstCountdown] = useState(0);      // seconds to next shot
 
   const activeFilter = FILTER_MAP[activeFilterId] ?? FILTER_MAP["none"];
@@ -89,9 +92,9 @@ export default function BoothCamera() {
 
   // ── Manual capture (also bound to Space) ────────────────────────────────────
   const handleCapture = useCallback(() => {
-    if (!enabled || burstActive) return;
+    if (!enabled || burstActive || atMaxPhotos) return;
     capturePhoto();
-  }, [enabled, burstActive, capturePhoto]);
+  }, [enabled, burstActive, atMaxPhotos, capturePhoto]);
 
   // ── Burst: 4 shots, BURST_INTERVAL seconds apart ───────────────────────────
   const cancelBurst = useCallback(() => {
@@ -101,13 +104,19 @@ export default function BoothCamera() {
     }
     setBurstActive(false);
     setBurstShot(0);
+    setBurstTotal(0);
     setBurstCountdown(0);
   }, []);
 
   const handleBurst = useCallback(() => {
-    if (!enabled || burstActive) return;
+    if (!enabled || burstActive || atMaxPhotos) return;
+
+    // Cap burst at remaining slots so we never overshoot MAX_PHOTOS.
+    const shotsToFire = Math.min(BURST_SHOTS, remainingSlots);
+    if (shotsToFire <= 0) return;
 
     setBurstActive(true);
+    setBurstTotal(shotsToFire);
     let shot      = 0;
     let countdown = 0;
 
@@ -116,7 +125,7 @@ export default function BoothCamera() {
       setBurstShot(shot);
       capturePhoto();
 
-      if (shot < BURST_SHOTS) {
+      if (shot < shotsToFire) {
         countdown = BURST_INTERVAL;
         setBurstCountdown(countdown);
         burstIntervalRef.current = setInterval(() => {
@@ -132,11 +141,12 @@ export default function BoothCamera() {
         setBurstActive(false);
         setBurstShot(0);
         setBurstCountdown(0);
+        setBurstTotal(0);
       }
     };
 
     runShot();
-  }, [enabled, burstActive, capturePhoto]);
+  }, [enabled, burstActive, atMaxPhotos, remainingSlots, capturePhoto]);
 
   // Spacebar → capture only when focus is not already on an interactive control.
   useEffect(() => {
@@ -221,26 +231,14 @@ export default function BoothCamera() {
     streamRef.current = null;
   }, []);
 
-  const captureDisabled = !enabled || burstActive;
+  const captureDisabled = !enabled || burstActive || atMaxPhotos;
 
   return (
     <div className="flex flex-1 flex-col items-center justify-start gap-4 p-4 lg:justify-center lg:p-6">
-      {/* ── Viewfinder ─────────────────────────────────────────────────────── */}
+      <ScatteredStickers />
+
+      {/* ── Viewfinder ──────────────────────────────────────────────────────── */}
       <div className="relative w-full max-w-lg">
-        <Image
-          src="/stickers/look-here.svg"
-          alt="Look Here"
-          width={100}
-          height={100}
-          className="absolute -top-2 -left-28 z-10 hidden w-40 -rotate-12 drop-shadow-md md:block"
-        />
-        <Image
-          src="/stickers/say.svg"
-          alt="Say Cheese"
-          width={100}
-          height={100}
-          className="absolute bottom-30 -right-32 z-10 hidden w-36 rotate-12 drop-shadow-md md:block"
-        />
 
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border bg-muted">
           {/* Raw video — hidden under the p5 canvas overlay */}
@@ -343,12 +341,14 @@ export default function BoothCamera() {
             )}
           </Button>
         </div>
-      </div>
+      </div>{/* end viewfinder container */}
 
-      <FilterSelector />
+      {/* ── Filter selector + controls ──────────────────────────────────────── */}
+      <div className="w-full max-w-lg">
+        <FilterSelector />
 
-      {/* ── Controls row ───────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-5">
+        {/* ── Controls row ─────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-center gap-5 pt-2">
 
         {/* Auto-burst button */}
         <div className="group relative">
@@ -359,7 +359,7 @@ export default function BoothCamera() {
           >
             {burstActive ? (
               <span className="text-sm font-bold tabular-nums">
-                {burstShot}/{BURST_SHOTS}
+                {burstShot}/{burstTotal}
               </span>
             ) : (
               <TimerIcon className="h-5 w-5" />
@@ -368,7 +368,7 @@ export default function BoothCamera() {
 
           {/* Tooltip */}
           <div className="pointer-events-none absolute bottom-full left-1/2 mb-2.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1.5 text-xs text-background opacity-0 shadow-md transition-opacity group-hover:opacity-100">
-            Auto: {BURST_SHOTS} shots · {BURST_INTERVAL}s apart
+            Auto: {Math.min(BURST_SHOTS, Math.max(remainingSlots, 0))} shots · {BURST_INTERVAL}s apart
             <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-foreground" />
           </div>
         </div>
@@ -431,7 +431,8 @@ export default function BoothCamera() {
           </div>
         </div>
 
-      </div>
+        </div>{/* end controls row */}
+      </div>{/* end filter+controls wrapper */}
 
     </div>
   );
