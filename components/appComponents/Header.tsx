@@ -15,7 +15,7 @@ const AppHeader = () => {
             alt="Photobooth"
             width={150}
             height={100}
-            className="h-auto w-24 dark:hidden sm:w-[100px]"
+            className="h-auto w-24 dark:hidden sm:w-[150px]"
             priority
           />
           <Image
@@ -23,7 +23,7 @@ const AppHeader = () => {
             alt="Photobooth"
             width={150}
             height={100}
-            className="hidden h-auto w-24 dark:block sm:w-[100px]"
+            className="hidden h-auto w-24 dark:block sm:w-[150px]"
             priority
           />
         </Link>
