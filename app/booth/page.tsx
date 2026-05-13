@@ -1,10 +1,22 @@
 import Image from "next/image";
 import BoothCamera from "@/components/appComponents/BoothCamera";
 import PhotoGallery from "@/components/appComponents/PhotoGallery";
+import { cn } from "@/lib/utils";
 
 export default function BoothPage() {
   return (
     <div className="booth-mesh-bg relative flex h-dvh flex-col overflow-hidden">
+      {/* Dotted grid layer — sits on top of the mesh gradient, behind content */}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 z-0 opacity-75 mix-blend-multiply",
+          "[background-size:20px_20px]",
+          "[background-image:radial-gradient(rgba(60,40,20,0.42)_1px,transparent_1px)]",
+          "[mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_90%)]",
+          "dark:opacity-60 dark:mix-blend-screen",
+          "dark:[background-image:radial-gradient(rgba(255,220,180,0.35)_1px,transparent_1px)]",
+        )}
+      />
       <div className="relative z-10 flex justify-center py-2">
         <Image
           src="/main-logo-light-theme.png"
