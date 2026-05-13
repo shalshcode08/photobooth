@@ -1,0 +1,104 @@
+:root {
+  --folder-color: #70a1ff;
+  --folder-back-color: #4785ff;
+  --paper-1: #e6e6e6;
+  --paper-2: #f2f2f2;
+  --paper-3: #ffffff;
+  --paper-4: #fafafa;
+}
+
+.folder {
+  transition: transform 0.25s ease-out;
+  cursor: pointer;
+}
+
+.folder:hover {
+  transform: translateY(-8px);
+}
+
+/* 4-paper fan spread on hover — left-to-right arc */
+.folder:hover .paper:nth-child(1) {
+  transform: translate(-150%, -55%) rotateZ(-22deg);
+}
+.folder:hover .paper:nth-child(2) {
+  transform: translate(-75%, -78%) rotateZ(-8deg);
+}
+.folder:hover .paper:nth-child(3) {
+  transform: translate(5%, -78%) rotateZ(8deg);
+}
+.folder:hover .paper:nth-child(4) {
+  transform: translate(80%, -55%) rotateZ(22deg);
+}
+
+.folder:hover .folder__front {
+  transform: skew(15deg) scaleY(0.6);
+}
+.folder:hover .right {
+  transform: skew(-15deg) scaleY(0.6);
+}
+
+.folder__back {
+  position: relative;
+  width: 100px;
+  height: 80px;
+  background: var(--folder-back-color);
+  border-radius: 0px 10px 10px 10px;
+}
+
+.folder__back::after {
+  position: absolute;
+  z-index: 0;
+  bottom: 98%;
+  left: 0;
+  content: '';
+  width: 30px;
+  height: 10px;
+  background: var(--folder-back-color);
+  border-radius: 5px 5px 0 0;
+}
+
+.paper {
+  position: absolute;
+  z-index: 2;
+  bottom: 10%;
+  left: 50%;
+  transform: translate(-50%, 10%);
+  width: 70%;
+  height: 80%;
+  background: var(--paper-1);
+  border-radius: 6px;
+  transition: transform 0.35s ease-in-out, box-shadow 0.25s ease;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.paper:nth-child(2) {
+  background: var(--paper-2);
+  width: 80%;
+  height: 75%;
+}
+.paper:nth-child(3) {
+  background: var(--paper-3);
+  width: 85%;
+  height: 70%;
+}
+.paper:nth-child(4) {
+  background: var(--paper-4);
+  width: 90%;
+  height: 65%;
+}
+
+.folder:hover .paper {
+  box-shadow: 0 4px 10px rgba(60, 40, 20, 0.18);
+}
+
+.folder__front {
+  position: absolute;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  background: var(--folder-color);
+  border-radius: 5px 10px 10px 10px;
+  transform-origin: bottom;
+  transition: transform 0.3s ease-in-out;
+}

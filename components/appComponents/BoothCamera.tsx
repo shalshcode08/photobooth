@@ -4,17 +4,94 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { VideoIcon, VideoOffIcon, TimerIcon, ZapIcon, ZapOffIcon } from "lucide-react";
+import { ArrowRightIcon, TimerIcon, VideoIcon, VideoOffIcon, ZapIcon, ZapOffIcon } from "lucide-react";
 import { MAX_PHOTOS, useCameraStore } from "@/store/cameraStore";
 import FilterSelector from "@/components/appComponents/FilterSelector";
-import ScatteredStickers from "@/components/appComponents/ScatteredStickers";
+import PrintLayoutModal from "@/components/appComponents/PrintLayoutModal";
 import P5VideoFilter, {
   type P5FilterHandle,
 } from "@/components/appComponents/P5VideoFilter";
+import { Modal, useModal } from "@/components/ui/animated-modal";
 import { FILTER_MAP } from "@/lib/filters";
 
 const BURST_SHOTS    = 4;
 const BURST_INTERVAL = 5; // seconds between shots
+
+// Shutter button. Lives inside <Modal> so it can open the print-layout modal
+// when the user has filled the 4-photo quota. The visible inner icon swaps
+// from the aperture-shutter SVG to a right-arrow with a small crossfade.
+function ShutterButton({
+  mode,
+  onCapture,
+  disabled,
+  ripple,
+}: {
+  mode: "capture" | "proceed";
+  onCapture: () => void;
+  disabled: boolean;
+  ripple: number;
+}) {
+  const { setOpen } = useModal();
+  const handleClick = mode === "proceed" ? () => setOpen(true) : onCapture;
+  const isCapture   = mode === "capture";
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={disabled}
+      aria-label={isCapture ? "Capture photo" : "Continue to print"}
+      className="group relative flex h-16 w-16 items-center justify-center rounded-full bg-[#C8390A] shadow-[0_4px_20px_rgba(200,57,10,0.5)] ring-4 ring-[#C8390A]/30 transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:ring-transparent"
+    >
+      <AnimatePresence>
+        {isCapture && ripple > 0 && (
+          <motion.span
+            key={ripple}
+            className="pointer-events-none absolute inset-0 rounded-full bg-[#C8390A]"
+            initial={{ scale: 1, opacity: 0.6 }}
+            animate={{ scale: 2.4, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait" initial={false}>
+        {isCapture ? (
+          <motion.svg
+            key="shutter"
+            initial={{ opacity: 0, scale: 0.6, rotate: 25 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            exit={{ opacity: 0, scale: 0.6, rotate: -25 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            width="100%"
+            height="100%"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-6 w-6 drop-shadow-sm"
+          >
+            <path d="M21.4155 15.3411C18.5924 17.3495 14.8895 17.5726 11.877 16M2.58445 8.65889C5.41439 6.64566 9.12844 6.42638 12.1448 8.01149M15.3737 14.1243C18.2604 12.305 19.9319 8.97413 19.601 5.51222M8.58184 9.90371C5.72231 11.7291 4.06959 15.0436 4.39878 18.4878M15.5269 10.137C15.3939 6.72851 13.345 3.61684 10.1821 2.17222M8.47562 13.9256C8.63112 17.3096 10.6743 20.392 13.8177 21.8278M19.071 4.92893C22.9763 8.83418 22.9763 15.1658 19.071 19.071C15.1658 22.9763 8.83416 22.9763 4.92893 19.071C1.02369 15.1658 1.02369 8.83416 4.92893 4.92893C8.83418 1.02369 15.1658 1.02369 19.071 4.92893ZM14.8284 9.17157C16.3905 10.7337 16.3905 13.2663 14.8284 14.8284C13.2663 16.3905 10.7337 16.3905 9.17157 14.8284C7.60948 13.2663 7.60948 10.7337 9.17157 9.17157C10.7337 7.60948 13.2663 7.60948 14.8284 9.17157Z" />
+          </motion.svg>
+        ) : (
+          <motion.span
+            key="proceed"
+            initial={{ opacity: 0, scale: 0.55, x: -8 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.55, x: 8 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="flex items-center justify-center"
+          >
+            <ArrowRightIcon className="h-7 w-7 text-white drop-shadow-sm" strokeWidth={2.5} />
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </button>
+  );
+}
 
 function stopMediaStream(stream: MediaStream | null) {
   if (!stream) return;
@@ -235,7 +312,6 @@ export default function BoothCamera() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-start gap-4 p-4 lg:justify-center lg:p-6">
-      <ScatteredStickers />
 
       {/* ── Viewfinder ──────────────────────────────────────────────────────── */}
       <div className="relative w-full max-w-lg">
@@ -343,7 +419,9 @@ export default function BoothCamera() {
         </div>
       </div>{/* end viewfinder container */}
 
-      {/* ── Filter selector + controls ──────────────────────────────────────── */}
+      {/* ── Filter selector + controls (wrapped in Modal provider so the
+            shutter can open the print-layout flow once 4 shots are in) ── */}
+      <Modal>
       <div className="w-full max-w-lg">
         <FilterSelector />
 
@@ -373,38 +451,14 @@ export default function BoothCamera() {
           </div>
         </div>
 
-        {/* Shutter button */}
-        <button
-          onClick={handleCapture}
-          disabled={captureDisabled}
-          className="group relative flex h-16 w-16 items-center justify-center rounded-full bg-[#C8390A] shadow-[0_4px_20px_rgba(200,57,10,0.5)] ring-4 ring-[#C8390A]/30 transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:ring-transparent"
-        >
-          <AnimatePresence>
-            {ripple > 0 && (
-              <motion.span
-                key={ripple}
-                className="pointer-events-none absolute inset-0 rounded-full bg-[#C8390A]"
-                initial={{ scale: 1, opacity: 0.6 }}
-                animate={{ scale: 2.4, opacity: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              />
-            )}
-          </AnimatePresence>
-          <svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="1"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-6 w-6 drop-shadow-sm"
-          >
-            <path d="M21.4155 15.3411C18.5924 17.3495 14.8895 17.5726 11.877 16M2.58445 8.65889C5.41439 6.64566 9.12844 6.42638 12.1448 8.01149M15.3737 14.1243C18.2604 12.305 19.9319 8.97413 19.601 5.51222M8.58184 9.90371C5.72231 11.7291 4.06959 15.0436 4.39878 18.4878M15.5269 10.137C15.3939 6.72851 13.345 3.61684 10.1821 2.17222M8.47562 13.9256C8.63112 17.3096 10.6743 20.392 13.8177 21.8278M19.071 4.92893C22.9763 8.83418 22.9763 15.1658 19.071 19.071C15.1658 22.9763 8.83416 22.9763 4.92893 19.071C1.02369 15.1658 1.02369 8.83416 4.92893 4.92893C8.83418 1.02369 15.1658 1.02369 19.071 4.92893ZM14.8284 9.17157C16.3905 10.7337 16.3905 13.2663 14.8284 14.8284C13.2663 16.3905 10.7337 16.3905 9.17157 14.8284C7.60948 13.2663 7.60948 10.7337 9.17157 9.17157C10.7337 7.60948 13.2663 7.60948 14.8284 9.17157Z" />
-          </svg>
-        </button>
+        {/* Shutter button — swaps to "proceed" mode once the 4-photo cap
+            is reached, opening the print-layout modal on click. */}
+        <ShutterButton
+          mode={atMaxPhotos ? "proceed" : "capture"}
+          onCapture={handleCapture}
+          disabled={!atMaxPhotos && (!enabled || burstActive)}
+          ripple={ripple}
+        />
 
         {/* Flash toggle button */}
         <div className="group relative">
@@ -433,6 +487,8 @@ export default function BoothCamera() {
 
         </div>{/* end controls row */}
       </div>{/* end filter+controls wrapper */}
+      <PrintLayoutModal />
+      </Modal>
 
     </div>
   );

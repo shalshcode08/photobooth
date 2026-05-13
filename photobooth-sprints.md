@@ -2,195 +2,205 @@
 
 ---
 
-## Sprint 2 · Professional Filters
+## Project Status · 2026-05-13
+
+### Built and working
+- **Booth page** — live WebGL-filtered preview (60 fps), 10 authentic film filters with grain / halation / vignette / light leaks / date stamps
+- **Capture flow** — manual shutter, auto-burst (4 × 5 s), spacebar key, screen flash, shutter sound, max 4 photos per session
+- **Filter selector** — chip strip with prev/next chevrons, hidden-scrollbar swipe, live CSS-preview thumbnails
+- **Photo gallery** — stacked card UI with delete + next/prev navigation, persistent active card via Zustand
+- **Camera lifecycle** — hardened against StrictMode double-invoke and async stop races (no more orange "in use" dot)
+- **Booth surface** — animated mesh-gradient background + faded dotted-grid overlay, four corner stickers with directional shadows
+
+### Built but underused
+- **PhotoGallery** — functional but is the *only* artifact; no way to take photos out of the app
+- **Mobile gallery strip** — `compact` mode exists, but offers no actions
+- **Clerk auth** — wired in the project scaffold, never gated to anything user-facing
+
+### Not started
+- **Photo strip output** — no shareable single image; this is the actual photobooth deliverable (→ Sprint 3)
+- **Download / share** — `<a download>` and `navigator.share` not wired
+- **Cloud persistence** — photos live in `localStorage` only; clearing storage loses them
+- **Strip templates / customization** — single-photo, polaroid grid, filmstrip variants
+- **Print / QR sharing**
+
+---
+
+## Sprint 3 · Photo Strip Output & Share
 
 ### Goal
-Replace the current basic CSS filters with a WebGL-powered filter engine that produces genuinely beautiful, film-inspired photos — the core product differentiator.
+Turn the booth from "takes four filtered photos" into "produces a photobooth strip you can take home." After capturing the 4-photo cap, the user can compose those photos into a single image using one of several template layouts, preview it large, then download or natively share it.
 
----
-
-### Why not CSS/SVG filters?
-
-| Approach | Real-time video | Capture quality | Verdict |
-|---|---|---|---|
-| CSS filters | Fast | Mediocre | Too limited (only brightness/contrast/hue-rotate) |
-| SVG feColorMatrix | <8 FPS on video | Good on stills | Not viable for live preview |
-| Canvas 2D pixel ops | 5–15 FPS | High | CPU-bound, too slow for 60fps |
-| **WebGL fragment shaders** | **60 FPS** | **Excellent** | **Use this** |
-
-CSS filters can only do basic adjustments. Professional-looking filters require per-channel tone curves, split toning (different color cast in shadows vs highlights), lifted blacks (matte/fade), and vignette — none of which are expressible in CSS alone. WebGL runs these on the GPU and is the only approach that handles real-time video at 60fps *and* produces high-quality captures.
-
----
+### Why now
+The capture pipeline is solid — Sprint 2 shipped WebGL filters, the 4-shot cap, burst, and flash. What's missing is the *deliverable*. A real photobooth always produces a single tangible artifact. Without the strip, the four photos are stranded in a gallery, which defeats the entire metaphor of the product.
 
 ### Architecture
 
 ```
-<video> (live camera feed)
-    ↓
-WebGL canvas overlay (same size, absolute-positioned over video)
-    → reads video as GPU texture every frame via requestAnimationFrame
-    → applies active filter's GLSL fragment shader
-    → renders to canvas at 60fps (user sees this, not the raw video)
-
-On capture:
-    → canvas.toDataURL("image/jpeg", 0.92)  ← already filtered, full res
+photos[] (4 dataURLs from BoothCamera)
+       ↓
+StripComposer.composeStrip(photos, template)
+       → loads each dataURL into HTMLImageElement, awaits decode
+       → creates an offscreen <canvas> sized per template
+       → paints background, frame, photos at template-defined slots
+       → paints header / footer text (logo, date, filter names)
+       → returns HTMLCanvasElement
+       ↓
+StripPreview modal
+       → renders the composed canvas at scaled-down size
+       → template picker chips re-compose on selection
+       → Download button: canvas.toBlob → <a download> trigger
+       → Share button:    canvas.toBlob → navigator.share({files:[...]})
+                          falls back to Download when share unavailable
 ```
 
-The raw `<video>` element stays hidden. The user always looks at the filtered WebGL canvas.
+Composition is a **pure function** (`composeStrip`) that takes inputs → returns a canvas. No React, no side effects. This makes it trivial to unit-test, swap templates, or call from any context (e.g., a future "regenerate" CTA).
 
----
+### Strip templates (4 to start)
 
-### Library
+| # | Name | Layout | Output dim | Character |
+|---|---|---|---|---|
+| 1 | **Classic Strip** | 4 photos vertical, 1 col, photo aspect 4:3 | 600 × 1800 | White paper, photobooth logo + date footer |
+| 2 | **Polaroid Grid** | 2 × 2, each tilted ±2°, white frame + drop shadow | 1200 × 1200 | Hand-arranged scrapbook feel |
+| 3 | **Single Hero** | 1 large + 3 small thumbnails below | 1000 × 1400 | Magazine-style, hero is the user's pick |
+| 4 | **Filmstrip** | 4 horizontal frames mimicking 35 mm with sprocket holes | 2400 × 600 | The most photo-booth-y option |
 
-**glfx.js** — 40 KB, MIT, no dependencies, purpose-built for WebGL image effects.
-Provides a simple `texture(video) → apply(fx) → draw()` API.
-Custom filters are GLSL fragment shaders compiled once at init.
+Template config is a typed object — no GLSL or canvas code in the template itself; the composer reads layout positions, padding, frame style, header config:
 
-Fallback: if WebGL unavailable (old device) → fall back to current CSS filter approach.
-
----
-
-### Filter Lineup (10 filters)
-
-Each filter is defined by a combination of: tone curve per channel (R/G/B), colour cast (matrix bias), saturation, vignette, lifted blacks (fade/matte), and optional grain.
-
-| # | Name | Inspiration | Character |
-|---|---|---|---|
-| 1 | **None** | — | Raw, no adjustment |
-| 2 | **Portra** | Kodak Portra 400 | Warm, slightly soft, skin-flattering. Lifted shadows, -8% sat, warm cast |
-| 3 | **Fuji** | Fuji Pro 400H | Cool-clean, slightly pastel. Light green in midtones, lifted whites |
-| 4 | **Fade** | Lifestyle/matte | Lifted blacks (+12), desaturated (-12%), low contrast. Clean modern fade |
-| 5 | **Golden** | Golden hour | Warm orange cast, boosted highlights, raised shadows. Glowing feel |
-| 6 | **Cinematic** | Teal-orange Hollywood | Teal in shadows (boost blue+green), orange in highlights. Vignette |
-| 7 | **B&W Classic** | Studio B&W | Luminance-weighted desaturation + S-curve contrast. Clean and elegant |
-| 8 | **B&W Grain** | Kodak Tri-X | High-contrast B&W + film grain overlay. Dramatic, editorial |
-| 9 | **Cross** | Cross-process | Boosted green shadows, clipped red highlights, punchy-weird colours |
-| 10 | **Vivid** | VSCO A-series | +30% saturation, punchy S-curve, slight warm cast. Instagram-ready |
-
----
-
-### Filter Parameter Reference (GLSL values)
-
-```
-// Portra
-brightness:  +0.02
-contrast:    -0.05
-saturation:  -0.08
-warm cast:   r +0.04, g +0.01, b -0.03
-black lift:  +0.04
-vignette:    0.25 strength, 0.6 radius
-
-// Fade / Matte
-black lift:  +0.10
-contrast:    -0.10
-saturation:  -0.12
-vignette:    0.15 strength, 0.55 radius
-
-// Cinematic (Teal-Orange)
-shadows tint:    b +0.08, g +0.04  (teal push)
-highlights tint: r +0.06, b -0.04  (orange push)
-black lift:      +0.05
-contrast:        +0.08
-vignette:        0.35 strength, 0.55 radius
-
-// Golden Hour
-warm cast:  r +0.08, g +0.03, b -0.06
-brightness: +0.04
-saturation: +0.10
-highlights: slightly clipped (+0.04 bias)
-
-// B&W Grain
-desaturate: 100%
-contrast:   +0.15 (deep blacks at -0.05)
-grain:      amplitude 0.06, mean 0.0
-
-// Cross Process
-R channel: toe lifted +0.05, highlight clipped +0.04
-G channel: shadow boosted +0.08, contrast +0.10
-B channel: desaturated -0.10 highlights
-```
-
----
-
-### Filter Preview Thumbnails
-
-Replace current gradient preview squares with real frames captured from the live camera feed. On each camera frame, capture a low-res thumbnail (80×60px), apply each filter's CSS approximation to the preview tile so users see how *their actual face* looks under each filter — not a generic gradient.
-
-CSS approximations (for previews only, not for actual filtering):
-- These don't need to be exact — just close enough for the selector thumbnail
-
----
-
-### Implementation Plan
-
-#### Step 1 — Install glfx.js
-```
-bun add glfx
-```
-Check for TypeScript types; write a minimal `.d.ts` shim if needed.
-
-#### Step 2 — `lib/filters.ts`
-Define filter configs as typed objects:
 ```ts
-interface FilterConfig {
+interface StripTemplate {
   id: string
   label: string
-  cssPreview: string        // CSS filter string for thumbnail preview
-  apply: (fx: GlfxCanvas) => GlfxCanvas  // glfx chain
+  dimensions: { w: number; h: number }
+  background: string                    // hex or "transparent"
+  slots: Array<{ x: number; y: number; w: number; h: number; rotate?: number; frame?: FrameSpec }>
+  header?:  TextSlot
+  footer?:  TextSlot
+  decorations?: Array<DecorationSpec>   // sprocket holes for filmstrip etc.
 }
 ```
 
-#### Step 3 — `components/appComponents/VideoFilter.tsx`
-Client component that:
-- Creates a `<canvas>` absolutely positioned over the video (same dimensions)
-- Initialises glfx canvas on mount
-- Runs `requestAnimationFrame` loop: `texture(videoEl).apply(activeFilter).draw()`
-- Cancels loop and releases WebGL context on unmount / camera off
-- Exposes a `getFilteredCanvas(): HTMLCanvasElement` ref for capture
+### Implementation plan
 
-#### Step 4 — Update `BoothCamera.tsx`
-- Render `<VideoFilter>` overlay on the `<video>` element
-- On capture: call `videoFilterRef.current.getFilteredCanvas().toDataURL()` instead of drawing from raw video
-- Remove CSS `filter` style from `<video>` tag (WebGL canvas handles it now)
+#### Step 1 — `lib/strip-templates.ts`
+Define `StripTemplate` interface and the 4 starter templates. Frame specs (border color, border width, shadow) per slot.
 
-#### Step 5 — Update `FilterSelector.tsx`
-- On camera active: every 2s, grab a tiny thumbnail frame from the video and store it
-- Render that thumbnail inside each filter button (with CSS approximation applied)
-- Shows the user's actual face/scene under each filter
+#### Step 2 — `lib/strip-composer.ts`
+Pure async function:
+```ts
+async function composeStrip(photos: string[], template: StripTemplate): Promise<HTMLCanvasElement>
+```
+- Decode photos in parallel (`Promise.all` over `Image.decode()`)
+- Paint slot rectangles with optional frame and rotation
+- Use `ctx.save()` / `ctx.restore()` for each rotated slot so transforms don't leak
+- Render header/footer text with a custom font (declared at app level)
 
-#### Step 6 — Update `cameraStore.ts`
-- Change `activeFilter: string` (CSS string) to `activeFilterId: string`
-- Keep the `FILTERS` array as the single source of truth in `lib/filters.ts`
+#### Step 3 — `components/appComponents/StripPreview.tsx`
+Client modal component:
+- Reads `photos` from store
+- Local state: `activeTemplateId`, `composing`, `composedDataUrl`
+- Effect: when active template or photos change, re-run `composeStrip` and update preview
+- Renders preview image, template chip picker, Download + Share buttons
+- Uses `<Dialog>` from existing shadcn UI
 
-#### Step 7 — WebGL fallback
-- Detect WebGL support on mount
-- If unavailable: skip `VideoFilter`, fall back to CSS filter on `<video>` tag
-- Log warning in dev
+#### Step 4 — `components/appComponents/StripTrigger.tsx`
+Small inline button that lives in the controls row. Disabled until `photos.length === 4`. Opens `StripPreview`. Animated state change when it becomes available ("Strip ready").
 
----
+#### Step 5 — `BoothCamera.tsx` integration
+Insert `<StripTrigger />` next to the existing Flash button. Re-balance controls row spacing.
+
+#### Step 6 — `PhotoGallery.tsx` polish
+- Empty state when `photos.length === 0` ("Take a few shots and your strip will appear here")
+- "Clear all" affordance when at max (today the user must delete photos one-by-one to retake)
+
+#### Step 7 — Download + Share
+- Download: `canvas.toBlob(blob => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'photobooth-<timestamp>.png'; a.click(); URL.revokeObjectURL(a.href); })`
+- Share (Web Share Level 2):
+  ```ts
+  const file = new File([blob], filename, { type: 'image/png' })
+  if (navigator.canShare?.({ files: [file] })) {
+    await navigator.share({ files: [file], title: 'My Photobooth Strip' })
+  } else {
+    // fall back to download
+  }
+  ```
 
 ### Files to create / modify
 
 | File | Action | Notes |
 |---|---|---|
-| `lib/filters.ts` | Create | Filter registry — configs, GLSL params, CSS previews |
-| `components/appComponents/VideoFilter.tsx` | Create | WebGL canvas overlay, animation loop |
-| `components/appComponents/BoothCamera.tsx` | Modify | Integrate VideoFilter, update capture source |
-| `components/appComponents/FilterSelector.tsx` | Modify | Live thumbnail previews |
-| `store/cameraStore.ts` | Modify | `activeFilterId` instead of CSS string |
+| `lib/strip-templates.ts` | Create | Typed template registry (4 layouts) |
+| `lib/strip-composer.ts` | Create | Pure `composeStrip(photos, template) → canvas` |
+| `components/appComponents/StripPreview.tsx` | Create | Modal w/ template picker + download/share |
+| `components/appComponents/StripTrigger.tsx` | Create | Inline "Make strip" CTA, disabled until 4 photos |
+| `components/appComponents/BoothCamera.tsx` | Modify | Add trigger to controls row |
+| `components/appComponents/PhotoGallery.tsx` | Modify | Empty state + clear-all action |
+
+### Performance targets
+- Strip compose for 4 photos at 600 × 1800 output: < 500 ms (decode + paint + encode)
+- Preview re-render on template change: < 250 ms
+- No main-thread jank during compose — measure with Performance API, move to OffscreenCanvas in a Worker only if budget exceeded
+
+### Risk / fallbacks
+- **iOS Safari Web Share files** — requires iOS 15+; check `navigator.canShare({ files: [...] })` before calling; fall back to download.
+- **OffscreenCanvas in workers** — not available in older Safari; default path is main-thread canvas, worker is opt-in if perf regresses.
+- **Photo aspect mismatch** — captured frames are 4:3 (cropped from video); template slots assume 4:3 — if a future template assumes 1:1, add object-cover-style crop math to the composer.
+- **Custom fonts in canvas** — load via `document.fonts.ready` before composing; fall back to `system-ui` if not loaded in time.
+
+### Stretch (next-sprint candidates, not in scope)
+- QR code on the strip linking to a hosted gallery URL (needs backend)
+- Print-friendly PDF export
+- Direct-to-social intents (Instagram Stories, X, etc.)
+- Strip "history" — save composed strips to the gallery as their own entry
 
 ---
 
-### Performance Targets
-- Live preview: 60 FPS on desktop, 30+ FPS on mid-range mobile
-- Frame render budget: <10 ms/frame (WebGL texture update ~0.5ms + shader ~2ms)
-- Capture latency: <50 ms (single `toDataURL` call)
-- Bundle addition: ~40 KB (glfx.js)
+## Sprint 2 · Completed ✓
 
-### Risk / Fallbacks
-- **iOS Safari WebGL on video**: Test early — some iOS versions restrict `texImage2D` from `<video>`. Fallback: draw video to intermediate 2D canvas first, then use that as WebGL texture.
-- **Low-end Android**: Monitor FPS; if <25fps, downscale canvas to 50% for live preview (still full res on capture).
-- **WebGL context lost**: Handle `webglcontextlost` event; reinitialise or fall back to CSS.
+Delivered the WebGL filter engine as specified, plus a sizeable interim polish pass on controls, decoration, and camera lifecycle.
+
+### Beyond the original plan
+- **Film lineup rescoped** to 10 authentic 90s stocks after color-science research (Kodak 400 / Fuji Superia / Disposable / Cross-process / Expired / Lomo / Polaroid / Cinestill / Tri-X) — replaced the originally-planned "Portra / Fade / Cinematic / Vivid" modern-lifestyle set.
+- **Per-filter authentic effects** — light leaks (4 variants), film grain with ISO-scaled tile size, halation, vignette auto-tightening, unique date-stamp variants per filter.
+- **Capture controls** — auto-burst (4 shots × 5 s), spacebar capture, screen-flash mode, max-4-photo cap with per-frame guards.
+- **Filter selector** — scrollable chip strip with prev/next arrows; hidden scrollbar; bounds-aware disable.
+- **Booth surface** — animated mesh-gradient background + dotted-grid overlay.
+- **Decorative stickers** — four corner stickers with directional drop-shadow ("stuck on wall" feel).
+- **Camera lifecycle hardening** — fixed StrictMode double-invoke double-stream, the orange "in-use" dot lingering after stop, and the spacebar double-capture (focused-button synthetic click).
+
+### Original spec (preserved for reference)
+
+Replace basic CSS filters with a WebGL-powered filter engine that produces beautiful, film-inspired photos.
+
+**Why not CSS / SVG / Canvas 2D**
+
+| Approach | Real-time video | Capture quality | Verdict |
+|---|---|---|---|
+| CSS filters | Fast | Mediocre | Too limited |
+| SVG feColorMatrix | < 8 fps | Good on stills | Not viable live |
+| Canvas 2D pixel ops | 5–15 fps | High | CPU-bound |
+| **WebGL fragment shaders** | **60 fps** | **Excellent** | **Use this** |
+
+**Architecture**
+```
+<video> (hidden live feed)
+    ↓
+WebGL canvas overlay (same size, absolute over video)
+    → samples video as GPU texture every frame
+    → applies active filter's fragment shader
+    → renders at 60 fps
+On capture:
+    → canvas.toDataURL("image/jpeg", 0.92)
+```
+
+**Library** — Replaced glfx.js with a hand-rolled p5 + per-filter render pipeline in `P5VideoFilter.tsx` (8 passes: mirror+crop → LUT/sat/split-tone → halation → vignette → haze → grain → light leak → stamp).
+
+**Pixel ops** — float [0,1] processing, Rec.709 luminance, split toning, LUT-based per-channel curves.
+
+**Performance achieved**
+- Live preview: 60 fps desktop, 30+ fps mid-range mobile
+- Frame budget: ~6 ms/frame typical
+- Capture: < 50 ms `toDataURL`
 
 ---
 
@@ -200,5 +210,5 @@ Client component that:
 - CSS filter selector (functional, used as Sprint 2 stepping stone)
 - Photo capture with flash + shutter sound
 - Gallery with animated stacked cards (next/prev navigation, delete)
-- Zustand store with localStorage persistence (camera on/off, active filter)
+- Zustand store with `localStorage` persistence (camera on/off, active filter)
 - Mobile responsive layout (no scroll, compact gallery strip)
