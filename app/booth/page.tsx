@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export default function BoothPage() {
   return (
-    <div className="booth-mesh-bg relative flex h-dvh flex-col overflow-hidden">
+    <div className="booth-mesh-bg relative flex min-h-dvh flex-col overflow-x-hidden lg:h-dvh lg:overflow-hidden">
       {/* Dotted grid layer — sits on top of the mesh gradient, behind content */}
       <div
         className={cn(
@@ -17,7 +17,7 @@ export default function BoothPage() {
           "dark:[background-image:radial-gradient(rgba(255,220,180,0.35)_1px,transparent_1px)]",
         )}
       />
-      <div className="relative z-10 flex justify-center py-2">
+      <div className="relative z-10 flex shrink-0 justify-center px-4 py-2">
         <Image
           src="/main-logo-light-theme.png"
           alt="Photobooth"
@@ -35,7 +35,7 @@ export default function BoothPage() {
           priority
         />
       </div>
-      <div className="relative z-10 flex flex-1 min-h-0 flex-col overflow-hidden lg:flex-row">
+      <div className="relative z-10 flex flex-1 flex-col lg:min-h-0 lg:overflow-hidden lg:flex-row">
         <BoothCamera />
         <div className="absolute bottom-0 right-0 top-0 hidden items-center lg:flex">
           <PhotoGallery />

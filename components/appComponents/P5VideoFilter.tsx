@@ -556,7 +556,6 @@ const P5VideoFilter = forwardRef<P5FilterHandle, Props>(
         p5Instance?.remove();
         canvasRef.current = null;
       };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [videoRef]);
 
     return (

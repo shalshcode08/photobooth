@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ArrowRightIcon } from "lucide-react";
 import {
   ModalBody,
@@ -172,13 +172,12 @@ export default function PrintLayoutModal() {
   const needsPicker = selected === "polaroid" || selected === "duo";
   const maxPick = layoutMeta.photosUsed;
 
-  // Reset photo selection whenever the layout changes — default to the first
-  // N photos so the user has a sensible starting state.
-  useEffect(() => {
+  const selectLayout = (layout: LayoutOption) => {
+    setSelected(layout.id);
     setSelectedPhotos(
-      Array.from({ length: layoutMeta.photosUsed }, (_, i) => i),
+      Array.from({ length: layout.photosUsed }, (_, i) => i),
     );
-  }, [selected, layoutMeta.photosUsed]);
+  };
 
   const togglePhoto = (i: number) => {
     setSelectedPhotos((prev) => {
@@ -240,8 +239,8 @@ export default function PrintLayoutModal() {
       />
 
       <ModalContent>
-        <div className="mb-5">
-          <h2 className="text-xl font-bold tracking-tight">
+        <div className="mb-4 pr-10 sm:mb-5">
+          <h2 className="text-lg font-bold tracking-tight sm:text-xl">
             Choose your layout
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -249,23 +248,23 @@ export default function PrintLayoutModal() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
+        <div className="grid grid-cols-2 gap-2 sm:gap-2.5 md:grid-cols-3">
           {LAYOUT_OPTIONS.map((opt) => {
             const isSelected = selected === opt.id;
             return (
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => setSelected(opt.id)}
+                onClick={() => selectLayout(opt)}
                 aria-pressed={isSelected}
                 className={cn(
-                  "group flex flex-col items-center gap-2 rounded-xl border-2 p-2.5 text-left transition-all",
+                  "group flex min-h-36 flex-col items-center gap-2 rounded-xl border-2 p-2 text-left transition-all sm:p-2.5",
                   isSelected
                     ? "border-[#C8390A] bg-[#C8390A]/5 shadow-sm"
                     : "border-border bg-background hover:border-[#C8390A]/40 hover:bg-muted/30",
                 )}
               >
-                <div className="flex h-24 w-full items-center justify-center rounded-md bg-muted/40">
+                <div className="flex h-20 w-full items-center justify-center rounded-md bg-muted/40 sm:h-24">
                   {opt.preview}
                 </div>
                 <div className="w-full text-center">
@@ -291,7 +290,7 @@ export default function PrintLayoutModal() {
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap gap-2 sm:gap-2.5">
               {photos.map((src, i) => {
                 const isSel = selectedPhotos.includes(i);
                 const order = selectedPhotos.indexOf(i);
@@ -301,7 +300,7 @@ export default function PrintLayoutModal() {
                     type="button"
                     onClick={() => togglePhoto(i)}
                     className={cn(
-                      "relative h-16 w-16 overflow-hidden rounded-md border-2 transition-all",
+                      "relative h-14 w-14 overflow-hidden rounded-md border-2 transition-all sm:h-16 sm:w-16",
                       isSel
                         ? "scale-[1.04] border-[#C8390A] shadow-[0_2px_10px_rgba(200,57,10,0.25)]"
                         : "border-border opacity-70 hover:border-[#C8390A]/40 hover:opacity-100",
@@ -326,7 +325,7 @@ export default function PrintLayoutModal() {
         )}
       </ModalContent>
 
-      <ModalFooter className="flex items-center justify-between border-t border-foreground/10 bg-transparent dark:bg-transparent">
+      <ModalFooter className="flex-col-reverse items-stretch justify-between border-t border-foreground/10 bg-transparent dark:bg-transparent sm:flex-row sm:items-center">
         {/* Folder of captured shots — hover to spread the papers */}
         <div className="ml-2 flex items-end" aria-hidden>
           <Folder color="#C8390A" size={0.55} items={folderItems} />
@@ -335,7 +334,7 @@ export default function PrintLayoutModal() {
         <button
           type="button"
           onClick={handleContinue}
-          className="inline-flex items-center gap-2 rounded-full bg-[#C8390A] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(200,57,10,0.35)] transition-all hover:scale-[1.02] hover:shadow-[0_6px_18px_rgba(200,57,10,0.45)] active:scale-95"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#C8390A] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(200,57,10,0.35)] transition-all hover:scale-[1.02] hover:shadow-[0_6px_18px_rgba(200,57,10,0.45)] active:scale-95 sm:h-auto"
         >
           Continue
           <ArrowRightIcon className="h-4 w-4" />

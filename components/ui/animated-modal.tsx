@@ -96,14 +96,14 @@ export const ModalBody = ({
             opacity: 0,
             backdropFilter: "blur(0px)",
           }}
-          className="fixed [perspective:800px] [transform-style:preserve-3d] inset-0 h-full w-full  flex items-center justify-center z-50"
+          className="fixed inset-0 z-50 flex h-full w-full items-end justify-center p-3 [perspective:800px] [transform-style:preserve-3d] sm:items-center sm:p-6"
         >
           <Overlay />
 
           <motion.div
             ref={modalRef}
             className={cn(
-              "min-h-[50%] max-h-[90%] md:max-w-[40%] bg-white dark:bg-neutral-950 border border-transparent dark:border-neutral-800 md:rounded-2xl relative z-50 flex flex-col flex-1 overflow-hidden",
+              "relative z-50 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border border-transparent bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950 sm:max-h-[min(90dvh,44rem)] sm:max-w-lg md:max-w-xl",
               className
             )}
             initial={{
@@ -146,7 +146,7 @@ export const ModalContent = ({
   className?: string;
 }) => {
   return (
-    <div className={cn("flex flex-col flex-1 p-8 md:p-10", className)}>
+    <div className={cn("flex min-h-0 flex-1 flex-col overflow-y-auto p-4 sm:p-6 md:p-8", className)}>
       {children}
     </div>
   );
@@ -162,7 +162,7 @@ export const ModalFooter = ({
   return (
     <div
       className={cn(
-        "flex justify-end p-4 bg-gray-100 dark:bg-neutral-900",
+        "flex shrink-0 justify-end gap-3 bg-gray-100 p-4 pb-[max(env(safe-area-inset-bottom),1rem)] dark:bg-neutral-900",
         className
       )}
     >
@@ -195,7 +195,8 @@ const CloseIcon = () => {
   return (
     <button
       onClick={() => setOpen(false)}
-      className="absolute top-4 end-4 group"
+      aria-label="Close modal"
+      className="group absolute top-3 end-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-background/70 backdrop-blur sm:top-4 sm:end-4 sm:h-10 sm:w-10"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -207,7 +208,7 @@ const CloseIcon = () => {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="text-black dark:text-white h-4 w-4 group-hover:scale-125 group-hover:rotate-3 transition duration-200"
+        className="h-4 w-4 text-black transition duration-200 group-hover:scale-110 group-hover:rotate-3 dark:text-white"
       >
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <path d="M18 6l-12 12" />
@@ -224,9 +225,9 @@ export const useOutsideClick = (
   callback: (event: Event) => void
 ) => {
   useEffect(() => {
-    const listener = (event: any) => {
+    const listener = (event: MouseEvent | TouchEvent) => {
       // DO NOTHING if the element being clicked is the target element or their children
-      if (!ref.current || ref.current.contains(event.target)) {
+      if (!ref.current || !(event.target instanceof Node) || ref.current.contains(event.target)) {
         return;
       }
       callback(event);

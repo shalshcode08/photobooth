@@ -17,7 +17,13 @@ export default function PhotoGallery({ compact = false }: { compact?: boolean })
 
   // Always show the latest photo when a new one is captured
   useEffect(() => {
-    if (photos.length > 0) setActive(photos.length - 1);
+    if (photos.length === 0) return;
+
+    const frame = requestAnimationFrame(() => {
+      setActive(photos.length - 1);
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, [photos.length]);
 
   const handleNext = () => setActive((p) => (p + 1) % photos.length);
@@ -26,10 +32,10 @@ export default function PhotoGallery({ compact = false }: { compact?: boolean })
   const safeActive = photos.length > 0 ? active % photos.length : 0;
 
   return (
-    <div className={compact ? "flex w-full items-center gap-3 px-4 py-2" : "flex w-full flex-col items-center justify-center gap-4 p-6 lg:w-80 lg:shrink-0"}>
+    <div className={compact ? "flex w-full items-center justify-center gap-3 px-3 py-2 sm:px-4" : "flex w-full flex-col items-center justify-center gap-4 p-6 lg:w-80 lg:shrink-0"}>
       {photos.length > 0 && (
         <>
-          <div className={compact ? "relative h-28 w-24 shrink-0" : "relative h-64 w-full"}>
+          <div className={compact ? "relative h-24 w-20 shrink-0 sm:h-28 sm:w-24" : "relative h-64 w-full"}>
             <AnimatePresence>
               {photos.map((src, index) => (
                 <motion.div
@@ -60,7 +66,8 @@ export default function PhotoGallery({ compact = false }: { compact?: boolean })
                         removePhoto(index);
                         setActive((p) => Math.max(0, p - 1));
                       }}
-                      className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-opacity hover:bg-black/70"
+                      aria-label={`Delete photo ${index + 1}`}
+                      className="absolute top-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-opacity hover:bg-black/70 sm:h-8 sm:w-8 lg:h-7 lg:w-7"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -77,13 +84,15 @@ export default function PhotoGallery({ compact = false }: { compact?: boolean })
             <div className="flex gap-1.5">
               <button
                 onClick={handlePrev}
-                className="group/btn flex h-7 w-7 items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted-foreground/20"
+                aria-label="Previous photo"
+                className="group/btn flex h-11 w-11 items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted-foreground/20 sm:h-8 sm:w-8 lg:h-7 lg:w-7"
               >
                 <IconArrowLeft className="h-3.5 w-3.5 text-foreground transition-transform duration-200 group-hover/btn:rotate-12" />
               </button>
               <button
                 onClick={handleNext}
-                className="group/btn flex h-7 w-7 items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted-foreground/20"
+                aria-label="Next photo"
+                className="group/btn flex h-11 w-11 items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted-foreground/20 sm:h-8 sm:w-8 lg:h-7 lg:w-7"
               >
                 <IconArrowRight className="h-3.5 w-3.5 text-foreground transition-transform duration-200 group-hover/btn:-rotate-12" />
               </button>

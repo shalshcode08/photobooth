@@ -3,7 +3,7 @@ import { WebcamPixelGrid } from "@/components/ui/webcam-pixel-grid";
 
 const HeroSection = () => {
   return (
-    <section className="relative isolate mx-auto flex min-h-[38rem] w-[calc(100%-2rem)] max-w-6xl flex-col items-center justify-center overflow-hidden border border-border bg-black px-6 py-20 text-center text-white sm:min-h-[42rem] sm:px-8 md:min-h-[45rem]">
+    <section className="relative isolate mx-auto flex min-h-[34rem] w-[calc(100%-1rem)] max-w-6xl flex-col items-center justify-center overflow-hidden border border-border bg-black px-4 py-14 text-center text-white sm:min-h-[42rem] sm:w-[calc(100%-2rem)] sm:px-8 sm:py-20 md:min-h-[45rem]">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
@@ -30,9 +30,9 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/70" />
       </div>
 
-      <h1 className="relative z-20 max-w-3xl font-heading text-4xl leading-[1.04] font-semibold tracking-normal text-white text-balance drop-shadow-[0_2px_16px_rgba(0,0,0,0.55)] sm:text-5xl md:text-6xl">
+      <h1 className="relative z-20 max-w-3xl text-balance font-heading text-[clamp(2.35rem,11vw,3.75rem)] leading-[1.04] font-semibold tracking-normal text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.55)] sm:text-5xl md:text-6xl">
         Capture the moment.
-        <br className="hidden sm:block" />
+        <br />
         Keep the memory.
       </h1>
       <div className="relative mt-4 w-full max-w-4xl">
@@ -48,11 +48,11 @@ const HeroSection = () => {
         >
           <Zap className="size-5" strokeWidth={1.9} />
         </div>
-        <p className="relative z-20 mx-auto max-w-2xl text-base leading-7 text-pretty text-white/65 sm:text-lg">
+        <p className="relative z-20 mx-auto max-w-2xl text-sm leading-6 text-pretty text-white/65 sm:text-lg sm:leading-7">
           A beautiful photobooth for capturing moments worth saving.
         </p>
 
-        <div className="relative mx-auto mt-10 grid h-28 w-full max-w-3xl place-items-center sm:h-32">
+        <div className="relative mx-auto mt-8 grid h-24 w-full max-w-3xl place-items-center sm:mt-10 sm:h-32">
           <div className="absolute inset-x-8 top-1/2 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
           <div
             aria-hidden="true"

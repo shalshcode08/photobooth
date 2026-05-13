@@ -311,12 +311,12 @@ export default function BoothCamera() {
   const captureDisabled = !enabled || burstActive || atMaxPhotos;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-start gap-4 p-4 lg:justify-center lg:p-6">
+    <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-start gap-3 px-3 py-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] sm:gap-4 sm:p-4 lg:justify-center lg:p-6">
 
       {/* ── Viewfinder ──────────────────────────────────────────────────────── */}
-      <div className="relative w-full max-w-lg">
+      <div className="booth-viewfinder-shell relative w-full max-w-lg">
 
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border bg-muted">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border bg-muted shadow-[0_18px_55px_rgba(64,40,20,0.16)] sm:rounded-xl">
           {/* Raw video — hidden under the p5 canvas overlay */}
           <video
             ref={videoRef}
@@ -408,7 +408,8 @@ export default function BoothCamera() {
             variant={enabled ? "destructive" : "default"}
             size="icon"
             onClick={enabled ? stopCamera : startCamera}
-            className="absolute bottom-3 right-3 z-10"
+            aria-label={enabled ? "Turn camera off" : "Turn camera on"}
+            className="absolute bottom-3 right-3 z-10 size-11 shadow-sm sm:size-8"
           >
             {enabled ? (
               <VideoOffIcon className="h-4 w-4" />
@@ -426,14 +427,15 @@ export default function BoothCamera() {
         <FilterSelector />
 
         {/* ── Controls row ─────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-center gap-5 pt-2">
+        <div className="flex items-center justify-center gap-4 pt-2 sm:gap-5">
 
         {/* Auto-burst button */}
         <div className="group relative">
           <button
             onClick={handleBurst}
             disabled={captureDisabled}
-            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#C8390A]/60 bg-background text-[#C8390A] transition-colors hover:bg-[#C8390A]/10 disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:opacity-40"
+            aria-label="Start automatic burst"
+            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#C8390A]/60 bg-background text-[#C8390A] transition-colors hover:bg-[#C8390A]/10 active:scale-95 disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:opacity-40 sm:h-12 sm:w-12"
           >
             {burstActive ? (
               <span className="text-sm font-bold tabular-nums">
@@ -465,7 +467,8 @@ export default function BoothCamera() {
           <button
             onClick={() => setFlashEnabled(!flashEnabled)}
             disabled={captureDisabled}
-            className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-colors disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:opacity-40 ${
+            aria-label={flashEnabled ? "Turn screen flash off" : "Turn screen flash on"}
+            className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-colors active:scale-95 disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:opacity-40 sm:h-12 sm:w-12 ${
               flashEnabled
                 ? "border-[#C8390A] bg-[#C8390A] text-white shadow-sm"
                 : "border-[#C8390A]/60 bg-background text-[#C8390A] hover:bg-[#C8390A]/10"

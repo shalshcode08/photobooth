@@ -39,7 +39,7 @@ export default function FilterSelector() {
 
   return (
     <div className="w-full max-w-lg">
-      <p className="mb-2 text-xs font-semibold tracking-[0.1em] uppercase text-muted-foreground">
+      <p className="mb-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground sm:mb-2 sm:text-xs">
         Filter
       </p>
 
@@ -56,7 +56,7 @@ export default function FilterSelector() {
 
         <div
           ref={scrollRef}
-          className="flex gap-2 overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-1 flex touch-pan-x snap-x gap-2 overflow-x-auto overscroll-x-contain scroll-smooth px-1 pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {FILTERS.map((filter) => (
             <button
@@ -64,13 +64,13 @@ export default function FilterSelector() {
               data-filter-id={filter.id}
               onClick={() => setActiveFilterId(filter.id)}
               className={cn(
-                "flex shrink-0 flex-col items-center gap-1.5 rounded-md border p-1.5 transition-colors",
+                "flex min-h-[4.75rem] w-[4.25rem] shrink-0 snap-start flex-col items-center justify-center gap-1.5 rounded-md border p-1.5 transition-colors sm:min-h-[5.25rem] sm:w-[4.75rem]",
                 activeFilterId === filter.id
                   ? "border-primary bg-primary/5"
                   : "border-border bg-muted hover:border-muted-foreground/40",
               )}
             >
-              <div className="h-12 w-12 overflow-hidden rounded">
+              <div className="h-11 w-11 overflow-hidden rounded sm:h-12 sm:w-12">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/cats-showcase/cat-5.jpg"
@@ -79,7 +79,7 @@ export default function FilterSelector() {
                   style={{ filter: filter.cssPreview || undefined }}
                 />
               </div>
-              <span className="text-[10px] font-medium text-foreground">
+              <span className="max-w-full truncate text-[10px] font-medium leading-none text-foreground">
                 {filter.label}
               </span>
             </button>
