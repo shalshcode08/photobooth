@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRightIcon } from "lucide-react";
 import {
   ModalBody,
@@ -163,6 +164,7 @@ const LAYOUT_OPTIONS: LayoutOption[] = [
 ];
 
 export default function PrintLayoutModal() {
+  const router = useRouter();
   const photos = useCameraStore((s) => s.photos);
   const [selected, setSelected] = useState<LayoutId>("strip-vertical");
   const [selectedPhotos, setSelectedPhotos] = useState<number[]>([0, 1, 2, 3]);
@@ -193,9 +195,13 @@ export default function PrintLayoutModal() {
   };
 
   const handleContinue = () => {
-    // TODO (next sprint step): route to /booth/print with layout + photo indices.
-    console.log("Continue:", { layout: selected, photos: selectedPhotos });
+    const params = new URLSearchParams({
+      layout: selected,
+      photos: selectedPhotos.slice(0, layoutMeta.photosUsed).join(","),
+    });
+
     setOpen(false);
+    router.push(`/booth/print?${params.toString()}`);
   };
 
   // Folder content — render each captured photo into a paper slot.
