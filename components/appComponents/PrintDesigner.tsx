@@ -1,7 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { CalendarDays, Circle, Clock3, Download, Heart, Sparkles, Square, Star } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  Circle,
+  Clock3,
+  Download,
+  Heart,
+  Palette,
+  Sparkles,
+  Square,
+  Star,
+} from "lucide-react";
 import { useMemo, useState, type ComponentType, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +30,7 @@ type StripColor = {
   id: string;
   label: string;
   value: string;
+  backgroundSize?: string;
 };
 
 type PhotoShape = {
@@ -26,6 +38,7 @@ type PhotoShape = {
   label: string;
   icon: ComponentType<{ className?: string }>;
   style?: CSSProperties;
+  frameClassName?: string;
 };
 
 type DateTimeMode = "none" | "date" | "time" | "both";
@@ -69,7 +82,164 @@ const STRIP_COLORS: StripColor[] = [
   { id: "pool", label: "Pool", value: "linear-gradient(135deg, #6ee7f9, #5271ff)" },
   { id: "candy", label: "Candy", value: "linear-gradient(135deg, #f9a8d4, #a78bfa)" },
   { id: "film", label: "Film", value: "linear-gradient(135deg, #191714, #4d3a28)" },
+  {
+    id: "retro-sunburst",
+    label: "Retro Sunburst",
+    value:
+      "repeating-conic-gradient(from -18deg at 50% 50%, rgba(255,255,255,.34) 0 9deg, transparent 9deg 18deg), linear-gradient(135deg, #f97316, #facc15)",
+  },
+  {
+    id: "diner-tile",
+    label: "Diner Tile",
+    value:
+      "conic-gradient(from 90deg, #ef4444 25%, #fff7ed 0 50%, #ef4444 0 75%, #fff7ed 0)",
+    backgroundSize: "10px 10px",
+  },
+  {
+    id: "arcade-grid",
+    label: "Arcade Grid",
+    value:
+      "linear-gradient(rgba(34,211,238,.32) 1px, transparent 1px), linear-gradient(90deg, rgba(236,72,153,.28) 1px, transparent 1px), linear-gradient(135deg, #111827, #312e81)",
+    backgroundSize: "9px 9px, 9px 9px, auto",
+  },
+  {
+    id: "cassette",
+    label: "Cassette",
+    value:
+      "repeating-linear-gradient(90deg, #f8fafc 0 9px, #f59e0b 9px 12px, #0f766e 12px 15px, #be123c 15px 18px, #f8fafc 18px 27px)",
+  },
+  {
+    id: "mod-dot",
+    label: "Mod Dot",
+    value:
+      "radial-gradient(circle, rgba(255,255,255,.84) 0 3px, transparent 3.5px), linear-gradient(135deg, #2563eb, #f97316)",
+    backgroundSize: "12px 12px, auto",
+  },
+  {
+    id: "record-groove",
+    label: "Record Groove",
+    value:
+      "repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.28) 0 1px, transparent 1px 5px), radial-gradient(circle at 50% 50%, rgba(251,191,36,.34) 0 5px, transparent 6px), linear-gradient(135deg, #18181b, #7c2d12)",
+  },
+  {
+    id: "groovy-wave",
+    label: "Groovy Wave",
+    value:
+      "radial-gradient(ellipse at 20% 30%, rgba(250,204,21,.82) 0 18%, transparent 19%), radial-gradient(ellipse at 78% 70%, rgba(20,184,166,.76) 0 20%, transparent 21%), linear-gradient(135deg, #fb7185, #7c3aed)",
+  },
+  {
+    id: "photo-booth",
+    label: "Photo Booth",
+    value:
+      "repeating-linear-gradient(0deg, rgba(255,255,255,.3) 0 3px, transparent 3px 12px), linear-gradient(135deg, #991b1b, #111827)",
+  },
+  {
+    id: "retro-plaid",
+    label: "Retro Plaid",
+    value:
+      "repeating-linear-gradient(0deg, rgba(255,255,255,.28) 0 2px, transparent 2px 12px), repeating-linear-gradient(90deg, rgba(17,24,39,.18) 0 2px, transparent 2px 12px), linear-gradient(135deg, #f97316, #fde68a)",
+    backgroundSize: "auto",
+  },
+  {
+    id: "halftone-pop",
+    label: "Halftone Pop",
+    value:
+      "radial-gradient(circle, rgba(255,255,255,.72) 0 2.5px, transparent 3px), linear-gradient(135deg, #db2777, #f97316)",
+    backgroundSize: "9px 9px, auto",
+  },
+  {
+    id: "tape-wave",
+    label: "Tape Wave",
+    value:
+      "repeating-linear-gradient(135deg, transparent 0 7px, rgba(255,255,255,.24) 7px 9px, transparent 9px 16px), linear-gradient(135deg, #0f766e, #f59e0b 48%, #be123c)",
+  },
+  {
+    id: "jukebox",
+    label: "Jukebox",
+    value:
+      "radial-gradient(circle at 24% 28%, rgba(255,255,255,.7) 0 4px, transparent 4.5px), radial-gradient(circle at 76% 72%, rgba(250,204,21,.72) 0 5px, transparent 5.5px), linear-gradient(135deg, #1d4ed8, #ec4899)",
+  },
+  {
+    id: "linen",
+    label: "Linen",
+    value:
+      "linear-gradient(0deg, rgba(15,23,42,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,.08) 1px, transparent 1px), #f8f1df",
+    backgroundSize: "8px 8px",
+  },
+  {
+    id: "porcelain",
+    label: "Porcelain",
+    value:
+      "linear-gradient(135deg, rgba(37,99,235,.28) 1px, transparent 1px), linear-gradient(45deg, rgba(20,184,166,.22) 1px, transparent 1px), #f8fbff",
+    backgroundSize: "10px 10px",
+  },
+  {
+    id: "pinstripe",
+    label: "Pinstripe",
+    value:
+      "repeating-linear-gradient(135deg, #fff7f7 0 9px, rgba(244,63,94,.24) 9px 11px, #fff7f7 11px 20px)",
+  },
+  {
+    id: "terrazzo",
+    label: "Terrazzo",
+    value:
+      "radial-gradient(circle at 18% 22%, #f97316 0 2px, transparent 2.5px), radial-gradient(circle at 64% 28%, #2563eb 0 1.7px, transparent 2.2px), radial-gradient(circle at 80% 70%, #14b8a6 0 2px, transparent 2.5px), radial-gradient(circle at 32% 78%, #db2777 0 1.7px, transparent 2.2px), #fff7ed",
+  },
+  {
+    id: "sage-dot",
+    label: "Sage Dot",
+    value:
+      "radial-gradient(circle, rgba(22,101,52,.3) 0 1.7px, transparent 2.2px), linear-gradient(135deg, #dcfce7, #ccfbf1)",
+    backgroundSize: "9px 9px, auto",
+  },
+  {
+    id: "noir-dot",
+    label: "Noir Dot",
+    value:
+      "radial-gradient(circle, rgba(255,255,255,.3) 0 1.4px, transparent 2px), linear-gradient(135deg, #18181b, #3f3f46)",
+    backgroundSize: "9px 9px, auto",
+  },
+  {
+    id: "bloom",
+    label: "Bloom",
+    value:
+      "radial-gradient(circle at 25% 30%, #fbbf24 0 2px, transparent 2.5px), radial-gradient(circle at 25% 30%, rgba(255,255,255,.9) 0 7px, transparent 7.5px), radial-gradient(circle at 74% 66%, #fbbf24 0 2px, transparent 2.5px), radial-gradient(circle at 74% 66%, rgba(255,255,255,.9) 0 7px, transparent 7.5px), linear-gradient(135deg, #bbf7d0, #99f6e4)",
+  },
+  { id: "cotton", label: "Cotton Candy", value: "linear-gradient(135deg, #f0abfc, #93c5fd 48%, #a7f3d0)" },
+  { id: "citrus", label: "Citrus", value: "linear-gradient(135deg, #fef08a, #fb923c 52%, #ef4444)" },
+  { id: "aurora", label: "Aurora", value: "linear-gradient(135deg, #22c55e, #14b8a6 45%, #6366f1)" },
+  { id: "berry", label: "Berry", value: "linear-gradient(135deg, #7f1d1d, #db2777 45%, #f9a8d4)" },
+  { id: "chrome", label: "Chrome", value: "linear-gradient(135deg, #f8fafc, #94a3b8 48%, #1f2937)" },
+  {
+    id: "blueprint",
+    label: "Blueprint",
+    value:
+      "linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px), linear-gradient(135deg, #1d4ed8, #0f766e)",
+    backgroundSize: "11px 11px, 11px 11px, auto",
+  },
+  {
+    id: "sun-wash",
+    label: "Sun Wash",
+    value:
+      "radial-gradient(circle at 22% 28%, rgba(255,255,255,.72) 0 8px, transparent 9px), radial-gradient(circle at 78% 72%, rgba(255,255,255,.42) 0 10px, transparent 11px), linear-gradient(135deg, #fde68a, #fb7185)",
+  },
+  {
+    id: "graphite",
+    label: "Graphite",
+    value:
+      "linear-gradient(135deg, rgba(255,255,255,.32) 1px, transparent 1px), linear-gradient(45deg, rgba(255,255,255,.13) 1px, transparent 1px), linear-gradient(135deg, #111827, #475569)",
+    backgroundSize: "9px 9px, 9px 9px, auto",
+  },
+  {
+    id: "rose-paper",
+    label: "Rose Paper",
+    value:
+      "linear-gradient(0deg, rgba(190,18,60,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(190,18,60,.09) 1px, transparent 1px), #fff1f2",
+    backgroundSize: "8px 8px",
+  },
 ];
+
+const COLLAPSED_COLOR_COUNT = 23;
 
 const PHOTO_SHAPES: PhotoShape[] = [
   { id: "none", label: "None", icon: Square },
@@ -77,6 +247,7 @@ const PHOTO_SHAPES: PhotoShape[] = [
     id: "star",
     label: "Star",
     icon: Star,
+    frameClassName: "absolute inset-0 overflow-hidden",
     style: {
       clipPath: "url(#print-star-clip)",
       WebkitClipPath: "url(#print-star-clip)",
@@ -86,6 +257,7 @@ const PHOTO_SHAPES: PhotoShape[] = [
     id: "heart",
     label: "Heart",
     icon: Heart,
+    frameClassName: "absolute inset-0 overflow-hidden",
     style: {
       clipPath: "url(#print-heart-clip)",
       WebkitClipPath: "url(#print-heart-clip)",
@@ -95,13 +267,19 @@ const PHOTO_SHAPES: PhotoShape[] = [
     id: "rounded",
     label: "Rounded",
     icon: Square,
-    style: { borderRadius: "22%" },
+    frameClassName: "absolute inset-0 overflow-hidden",
+    style: { borderRadius: "0.55rem" },
   },
   {
     id: "circle",
     label: "Circle",
     icon: Circle,
-    style: { borderRadius: "9999px", aspectRatio: "1 / 1" },
+    frameClassName:
+      "absolute left-1/2 top-1/2 aspect-square h-full -translate-x-1/2 -translate-y-1/2 overflow-hidden",
+    style: {
+      clipPath: "circle(50% at 50% 50%)",
+      WebkitClipPath: "circle(50% at 50% 50%)",
+    },
   },
 ];
 
@@ -151,6 +329,51 @@ function isDarkBackground(background: string) {
   return average < 0.42;
 }
 
+function splitBackgroundLayers(background: string) {
+  if (background.startsWith("#")) {
+    return { backgroundColor: background, backgroundImage: "none" };
+  }
+
+  const layers: string[] = [];
+  let depth = 0;
+  let start = 0;
+
+  for (let index = 0; index < background.length; index += 1) {
+    const char = background[index];
+
+    if (char === "(") depth += 1;
+    if (char === ")") depth -= 1;
+
+    if (char === "," && depth === 0) {
+      layers.push(background.slice(start, index).trim());
+      start = index + 1;
+    }
+  }
+
+  layers.push(background.slice(start).trim());
+
+  const lastLayer = layers.at(-1) ?? "";
+  const hasColorLayer = /^#[0-9a-f]{3,8}$/i.test(lastLayer);
+
+  return {
+    backgroundColor: hasColorLayer ? lastLayer : "transparent",
+    backgroundImage: (hasColorLayer ? layers.slice(0, -1) : layers).join(", "),
+  };
+}
+
+function backgroundStyle(
+  background: string,
+  backgroundSize?: string,
+): CSSProperties {
+  const { backgroundColor, backgroundImage } = splitBackgroundLayers(background);
+
+  return {
+    backgroundColor,
+    backgroundImage: backgroundImage || "none",
+    backgroundSize: backgroundSize ?? "auto",
+  };
+}
+
 function useSelectedPhotos(photoIndices: number[], photoCount: number) {
   const photos = useCameraStore((state) => state.photos);
 
@@ -171,11 +394,18 @@ export default function PrintDesigner({
   const stripPhotos = useSelectedPhotos(initialPhotoIndices, layoutMeta.photosUsed);
   const [selectedColor, setSelectedColor] = useState(STRIP_COLORS[0]);
   const [customColor, setCustomColor] = useState("#c8390a");
+  const [showAllColors, setShowAllColors] = useState(false);
   const [shape, setShape] = useState<PhotoShape>(PHOTO_SHAPES[0]);
   const [dateTimeMode, setDateTimeMode] = useState<DateTimeMode>("date");
   const stamp = formatStamp(dateTimeMode, generatedAt);
   const stripBackground =
     selectedColor.id === "custom" ? customColor : selectedColor.value;
+  const stripBackgroundSize =
+    selectedColor.id === "custom" ? undefined : selectedColor.backgroundSize;
+  const visibleStripColors = showAllColors
+    ? STRIP_COLORS
+    : STRIP_COLORS.slice(0, COLLAPSED_COLOR_COUNT);
+  const hiddenColorCount = STRIP_COLORS.length - COLLAPSED_COLOR_COUNT;
   const darkStrip = isDarkBackground(stripBackground);
   const stampColor = darkStrip
     ? "rgba(255,255,255,0.78)"
@@ -185,28 +415,15 @@ export default function PrintDesigner({
     <div
       key={index}
       className={cn(
-        "grid aspect-[4/3] min-h-0 place-items-center overflow-hidden",
+        "relative aspect-[4/3] w-full overflow-hidden",
         shape.id === "none"
           ? "bg-white/85 shadow-inner ring-1 ring-black/10"
           : "bg-transparent",
       )}
     >
-      {src && shape.id === "none" ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt={`Selected print photo ${index + 1}`}
-          className="h-full w-full object-cover"
-        />
-      ) : src ? (
+      {src ? (
         <div
-          className={cn(
-            "relative aspect-square h-[84%] w-auto max-w-[92%] overflow-hidden",
-            shape.id === "heart" && "h-[86%]",
-            shape.id === "star" && "h-[88%]",
-            shape.id === "rounded" && "h-[88%]",
-            shape.id === "circle" && "h-[88%]",
-          )}
+          className={shape.frameClassName ?? "absolute inset-0 overflow-hidden"}
           style={shape.style}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -227,7 +444,7 @@ export default function PrintDesigner({
   const previewContent = (() => {
     if (initialLayout === "strip-horizontal") {
       return (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid w-full grid-cols-4 items-stretch gap-2">
           {stripPhotos.map(renderPhoto)}
         </div>
       );
@@ -235,7 +452,7 @@ export default function PrintDesigner({
 
     if (initialLayout === "grid-mixed") {
       return (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid w-full grid-cols-2 items-stretch gap-2">
           {stripPhotos.map(renderPhoto)}
         </div>
       );
@@ -243,22 +460,26 @@ export default function PrintDesigner({
 
     if (initialLayout === "polaroid") {
       return (
-        <div className="pb-10">
+        <div className="grid w-full grid-cols-1 pb-10">
           {renderPhoto(stripPhotos[0] ?? null, 0)}
         </div>
       );
     }
 
-    return <div className="grid gap-2">{stripPhotos.map(renderPhoto)}</div>;
+    return (
+      <div className="grid w-full grid-cols-1 items-stretch gap-2">
+        {stripPhotos.map(renderPhoto)}
+      </div>
+    );
   })();
 
   const previewWidth = cn(
-    "relative w-full",
-    initialLayout === "strip-horizontal" && "max-w-[36rem]",
-    initialLayout === "grid-mixed" && "max-w-[26rem]",
-    initialLayout === "polaroid" && "max-w-[clamp(10rem,27dvh,16rem)]",
-    initialLayout === "duo" && "max-w-[clamp(8rem,24dvh,13rem)]",
-    initialLayout === "strip-vertical" && "max-w-[clamp(8rem,21dvh,13rem)]",
+    "relative max-w-full",
+    initialLayout === "strip-horizontal" && "w-[min(100%,36rem)]",
+    initialLayout === "grid-mixed" && "w-[min(100%,30rem)]",
+    initialLayout === "polaroid" && "w-[clamp(11rem,31dvh,18rem)]",
+    initialLayout === "duo" && "w-[clamp(9rem,29dvh,15rem)]",
+    initialLayout === "strip-vertical" && "w-[clamp(9rem,27dvh,15rem)]",
   );
 
   return (
@@ -266,10 +487,10 @@ export default function PrintDesigner({
       <svg className="absolute h-0 w-0" aria-hidden="true">
         <defs>
           <clipPath id="print-star-clip" clipPathUnits="objectBoundingBox">
-            <path d="M .5 .02 L .62 .35 L .98 .35 L .69 .56 L .80 .92 L .5 .70 L .20 .92 L .31 .56 L .02 .35 L .38 .35 Z" />
+            <path d="M .5 .02 L .62 .32 L .98 .32 L .69 .52 L .82 .90 L .5 .66 L .18 .90 L .31 .52 L .02 .32 L .38 .32 Z" />
           </clipPath>
           <clipPath id="print-heart-clip" clipPathUnits="objectBoundingBox">
-            <path d="M .5 .92 C .43 .84 .14 .62 .09 .37 C .05 .17 .19 .05 .34 .05 C .42 .05 .48 .1 .5 .18 C .52 .1 .58 .05 .66 .05 C .81 .05 .95 .17 .91 .37 C .86 .62 .57 .84 .5 .92 Z" />
+            <path d="M .5 .96 C .36 .82 .06 .58 .04 .30 C .02 .10 .17 .01 .34 .01 C .43 .01 .49 .07 .5 .16 C .51 .07 .57 .01 .66 .01 C .83 .01 .98 .10 .96 .30 C .94 .58 .64 .82 .5 .96 Z" />
           </clipPath>
         </defs>
       </svg>
@@ -317,8 +538,8 @@ export default function PrintDesigner({
                 <h2 className="text-sm font-semibold text-foreground">
                   Strip color
                 </h2>
-                <div className="mt-2 grid grid-cols-5 gap-1.5">
-                  {STRIP_COLORS.map((color) => (
+                <div className="mt-2 grid grid-cols-8 gap-2 sm:grid-cols-8 sm:gap-2.5">
+                  {visibleStripColors.map((color) => (
                     <button
                       key={color.id}
                       type="button"
@@ -326,24 +547,30 @@ export default function PrintDesigner({
                       aria-label={`Choose ${color.label}`}
                       aria-pressed={selectedColor.id === color.id}
                       className={cn(
-                        "h-7 rounded-md border bg-background p-1 transition-all active:scale-95 sm:h-8",
+                        "group grid h-7 w-7 place-items-center rounded-full p-0 transition-all active:scale-95 sm:h-8 sm:w-8",
                         selectedColor.id === color.id
-                          ? "border-primary ring-2 ring-primary/20"
-                          : "border-border hover:border-muted-foreground/50",
+                          ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                          : "hover:scale-105",
                       )}
                     >
                       <span
-                        className="block h-full w-full rounded-[3px]"
-                        style={{ background: color.value }}
-                      />
+                        className="relative block h-full w-full overflow-hidden rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05),0_2px_7px_rgba(15,23,42,0.12)]"
+                        style={backgroundStyle(color.value, color.backgroundSize)}
+                      >
+                        {selectedColor.id === color.id && (
+                          <span className="absolute inset-0 grid place-items-center bg-black/18 text-white drop-shadow">
+                            <Check className="h-3.5 w-3.5" />
+                          </span>
+                        )}
+                      </span>
                     </button>
                   ))}
                   <label
                     className={cn(
-                      "relative h-7 cursor-pointer rounded-md border bg-background p-1 transition-all sm:h-8",
+                      "group relative grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-[conic-gradient(from_90deg,#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#ef4444)] p-[2px] transition-all active:scale-95 sm:h-8 sm:w-8",
                       selectedColor.id === "custom"
-                        ? "border-primary ring-2 ring-primary/20"
-                        : "border-border hover:border-muted-foreground/50",
+                        ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                        : "hover:scale-105",
                     )}
                     aria-label="Choose custom strip color"
                   >
@@ -361,11 +588,26 @@ export default function PrintDesigner({
                       className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                     />
                     <span
-                      className="block h-full w-full rounded-[3px]"
-                      style={{ background: customColor }}
-                    />
+                      className="grid h-full w-full place-items-center rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.68),0_2px_7px_rgba(15,23,42,0.12)]"
+                      style={backgroundStyle(customColor)}
+                    >
+                      {selectedColor.id === "custom" ? (
+                        <Check className="h-3.5 w-3.5 text-white drop-shadow" />
+                      ) : (
+                        <Palette className="h-3.5 w-3.5 text-white drop-shadow" />
+                      )}
+                    </span>
                   </label>
                 </div>
+                {hiddenColorCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllColors((current) => !current)}
+                    className="mt-2 text-xs font-semibold text-primary transition-colors hover:text-primary/80"
+                  >
+                    {showAllColors ? "Show less" : "Show more"}
+                  </button>
+                )}
               </section>
 
               <section>
@@ -435,39 +677,38 @@ export default function PrintDesigner({
           </Card>
         </aside>
 
-        <Card className="min-h-0 gap-0 bg-background/48 py-0 shadow-[0_22px_90px_rgba(15,23,42,0.09)] backdrop-blur-sm">
+        <Card className="relative min-h-0 gap-0 bg-background/48 py-0 shadow-[0_22px_90px_rgba(15,23,42,0.09)] backdrop-blur-sm">
+          <div className="absolute right-3 top-3 z-20 flex gap-2 sm:right-5 sm:top-5">
+            <Button disabled size="sm" className="h-8 px-3 sm:h-9">
+              <Download className="h-4 w-4" />
+              Print
+            </Button>
+            <Button disabled size="sm" variant="outline" className="h-8 px-3 sm:h-9">
+              Create GIF
+            </Button>
+          </div>
           <CardContent className="flex h-full min-h-0 flex-col items-center justify-center px-3 py-3 sm:px-5 sm:py-5">
             <div className="flex min-h-0 flex-1 items-center justify-center">
               <div className={previewWidth}>
                 <div
-                  className="relative p-2 shadow-[0_26px_80px_rgba(15,23,42,0.16)] ring-1 ring-black/5 sm:p-4"
-                  style={{ background: stripBackground }}
+                  className="relative w-full min-w-0 p-1.5 shadow-[0_26px_80px_rgba(15,23,42,0.16)] ring-1 ring-black/5 sm:p-3"
+                  style={backgroundStyle(stripBackground, stripBackgroundSize)}
                 >
                   <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(255,255,255,0.38),transparent_34%,rgba(0,0,0,0.08))] mix-blend-soft-light" />
                   <div className="relative">{previewContent}</div>
 
                   {stamp && (
-                    <div
-                      className="relative mt-2 text-center font-mono text-[10px] font-semibold uppercase tracking-[0.16em] sm:mt-3 sm:text-[11px]"
-                      style={{ color: stampColor }}
-                    >
-                      {stamp}
+                    <div className="relative mt-2 h-4 overflow-hidden sm:mt-3 sm:h-5">
+                      <div
+                        className="absolute inset-0 flex min-w-0 items-center justify-center overflow-hidden whitespace-nowrap text-center font-mono text-[9px] font-semibold uppercase leading-none tracking-[0.08em] sm:text-[10px]"
+                        style={{ color: stampColor }}
+                      >
+                        {stamp}
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
-            </div>
-
-            <Separator className="my-3 w-full max-w-sm sm:my-4" />
-
-            <div className="grid w-full max-w-sm gap-2 sm:grid-cols-2">
-              <Button disabled className="h-9 sm:h-10">
-                <Download className="h-4 w-4" />
-                Print
-              </Button>
-              <Button disabled variant="outline" className="h-9 sm:h-10">
-                Create GIF
-              </Button>
             </div>
           </CardContent>
         </Card>

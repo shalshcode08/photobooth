@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 export const MAX_PHOTOS = 4;
 
@@ -36,8 +36,10 @@ export const useCameraStore = create<CameraStore>()(
     }),
     {
       name: "camera-store",
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         enabled: state.enabled,
+        photos: state.photos,
         activeFilterId: state.activeFilterId,
         flashEnabled: state.flashEnabled,
       }),
