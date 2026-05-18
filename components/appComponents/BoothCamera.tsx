@@ -8,6 +8,7 @@ import { ArrowRightIcon, TimerIcon, VideoIcon, VideoOffIcon, ZapIcon, ZapOffIcon
 import { MAX_PHOTOS, useCameraStore } from "@/store/cameraStore";
 import FilterSelector from "@/components/appComponents/FilterSelector";
 import PrintLayoutModal from "@/components/appComponents/PrintLayoutModal";
+import CameraDeviceSelector from "@/components/appComponents/CameraDeviceSelector";
 import P5VideoFilter, {
   type P5FilterHandle,
 } from "@/components/appComponents/P5VideoFilter";
@@ -126,7 +127,7 @@ export default function BoothCamera() {
   const wantCameraRef = useRef(false);   // flipped to false by stopCamera so an
                                          // in-flight getUserMedia aborts on resolve
 
-  const { enabled, setEnabled, activeFilterId, addPhoto, photos, flashEnabled, setFlashEnabled } = useCameraStore();
+  const { enabled, setEnabled, activeFilterId, addPhoto, photos, flashEnabled, setFlashEnabled, videoDeviceId, setVideoDeviceId } = useCameraStore();
   const remainingSlots = MAX_PHOTOS - photos.length;
   const atMaxPhotos    = remainingSlots <= 0;
   const [screenFlashPhase, setScreenFlashPhase] = useState<"off"|"hold"|"fade">("off");
@@ -260,7 +261,21 @@ export default function BoothCamera() {
     startingRef.current  = true;
     wantCameraRef.current = true;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // Try the saved device first; if it's gone (unplugged, different machine)
+      // fall back to any available camera so the user is never left blank.
+      const constraints: MediaStreamConstraints = {
+        video: videoDeviceId ? { deviceId: { exact: videoDeviceId } } : true,
+      };
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (error) {
+        if (videoDeviceId && error instanceof Error && (error.name === "OverconstrainedError" || error.name === "NotFoundError")) {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        } else {
+          throw error;
+        }
+      }
       // stopCamera may have been called while we were awaiting — kill the stream
       if (!wantCameraRef.current) {
         stopMediaStream(stream);
@@ -268,13 +283,19 @@ export default function BoothCamera() {
       }
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
+      // Sync the store with the device we actually got so the selector reflects
+      // reality (e.g. when no preference was set and the browser picked one).
+      const settings = stream.getVideoTracks()[0]?.getSettings();
+      if (settings?.deviceId && settings.deviceId !== videoDeviceId) {
+        setVideoDeviceId(settings.deviceId);
+      }
       setEnabled(true);
     } catch {
       // permission denied or no camera
     } finally {
       startingRef.current = false;
     }
-  }, [setEnabled]);
+  }, [setEnabled, videoDeviceId, setVideoDeviceId]);
 
   const stopCamera = useCallback(() => {
     // Signal any in-flight getUserMedia to abort on resolve
@@ -300,6 +321,21 @@ export default function BoothCamera() {
     }
   }, [enabled, startCamera]);
 
+  // When the user picks a different camera, restart the stream against the new
+  // device. We compare against the running track's deviceId to skip the no-op
+  // case where startCamera just synced the store with the auto-selected device.
+  useEffect(() => {
+    if (!enabled || !streamRef.current) return;
+    const currentDeviceId = streamRef.current
+      .getVideoTracks()[0]
+      ?.getSettings().deviceId;
+    if (currentDeviceId === videoDeviceId) return;
+    stopMediaStream(streamRef.current);
+    releaseVideoStream(videoRef.current);
+    streamRef.current = null;
+    startCamera();
+  }, [videoDeviceId, enabled, startCamera]);
+
   // Release camera on unmount (navigation away from the page)
   useEffect(() => () => {
     wantCameraRef.current = false;
@@ -315,6 +351,12 @@ export default function BoothCamera() {
 
       {/* ── Viewfinder ──────────────────────────────────────────────────────── */}
       <div className="booth-viewfinder-shell relative w-full max-w-lg">
+
+        {/* Camera device selector ── centered row directly above the
+            viewfinder on every screen size. */}
+        <div className="mb-2 flex justify-center">
+          <CameraDeviceSelector />
+        </div>
 
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border bg-muted shadow-[0_18px_55px_rgba(64,40,20,0.16)] sm:rounded-xl">
           {/* Raw video — hidden under the p5 canvas overlay */}

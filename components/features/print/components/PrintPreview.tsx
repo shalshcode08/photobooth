@@ -1,4 +1,4 @@
-import { Download } from "lucide-react";
+import { Download, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -24,28 +24,35 @@ export function PrintPreview({
   stripBackground,
   stripBackgroundSize,
 }: PrintPreviewProps) {
+  // Each layout is scaled so its natural aspect ratio fills the canvas height
+  // similarly to the vertical strip (which already looked correctly sized).
+  // Wide layouts (strip-horizontal, grid-mixed) take the full canvas width and
+  // are capped via height-based units so very tall canvases don't overflow.
+  // Portrait layouts (polaroid, duo, vertical) are sized in viewport-height
+  // units so they grow with the canvas.
   const previewWidth = cn(
     "relative max-w-full",
-    layout === "strip-horizontal" && "w-full max-w-[36rem]",
-    layout === "grid-mixed" && "w-full max-w-[30rem]",
-    layout === "polaroid" && "w-[clamp(11rem,31dvh,18rem)]",
-    layout === "duo" && "w-[clamp(9rem,29dvh,15rem)]",
+    layout === "strip-horizontal" && "w-full",
+    layout === "grid-mixed" && "w-full max-w-[min(100%,82dvh)]",
+    layout === "polaroid" && "w-[clamp(13rem,58dvh,28rem)]",
+    layout === "duo" && "w-[clamp(11rem,46dvh,20rem)]",
     layout === "strip-vertical" && "w-[clamp(9rem,27dvh,15rem)]",
   );
 
   return (
-    <Card className="relative min-h-0 gap-0 bg-background/48 py-0 shadow-[0_22px_90px_rgba(15,23,42,0.09)] backdrop-blur-sm">
+    <Card className="print-canvas-grid relative min-h-0 gap-0 overflow-hidden bg-background/48 py-0 shadow-[0_22px_90px_rgba(15,23,42,0.09)] backdrop-blur-sm">
       <div className="absolute right-3 top-3 z-20 flex gap-2 sm:right-5 sm:top-5">
         <Button disabled size="sm" className="h-8 px-3 sm:h-9">
           <Download className="h-4 w-4" />
           Print
         </Button>
         <Button disabled size="sm" variant="outline" className="h-8 px-3 sm:h-9">
+          <Film className="h-4 w-4" />
           Create GIF
         </Button>
       </div>
 
-      <CardContent className="flex h-full min-h-0 flex-col items-center justify-center px-3 py-3 sm:px-5 sm:py-5">
+      <CardContent className="relative z-10 flex h-full min-h-0 flex-col items-center justify-center px-3 py-3 sm:px-5 sm:py-5">
         <div className="flex min-h-0 w-full flex-1 items-center justify-center">
           <div className={previewWidth}>
             <div

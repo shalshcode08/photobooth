@@ -134,6 +134,15 @@
   }
 }
 
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .photobooth-page-surface {
   position: relative;
   isolation: isolate;
@@ -193,6 +202,30 @@
   background:
     linear-gradient(to bottom, oklch(1 0 0 / 0.15), oklch(1 0 0 / 0.70)),
     radial-gradient(ellipse at center, transparent 44%, oklch(0.92 0.008 230 / 0.42));
+}
+
+/* ----------------------------------------------------------------------------
+   Print canvas grid — subtle "drafting paper" feel for the preview card.
+   Two thin line layers fade out toward the edges so the strip stays the focus.
+   ---------------------------------------------------------------------------- */
+.print-canvas-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, oklch(0.148 0.004 228.8 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.148 0.004 228.8 / 0.045) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 88%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 88%);
+}
+
+.dark .print-canvas-grid::before {
+  background-image:
+    linear-gradient(to right, oklch(1 0 0 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(1 0 0 / 0.05) 1px, transparent 1px);
 }
 
 @media (prefers-reduced-motion: no-preference) {

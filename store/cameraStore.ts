@@ -13,6 +13,8 @@ interface CameraStore {
   setActiveFilterId: (id: string) => void;
   flashEnabled: boolean;
   setFlashEnabled: (enabled: boolean) => void;
+  videoDeviceId: string | null;
+  setVideoDeviceId: (id: string | null) => void;
 }
 
 export const useCameraStore = create<CameraStore>()(
@@ -33,6 +35,8 @@ export const useCameraStore = create<CameraStore>()(
       setActiveFilterId: (id) => set({ activeFilterId: id }),
       flashEnabled: false,
       setFlashEnabled: (enabled) => set({ flashEnabled: enabled }),
+      videoDeviceId: null,
+      setVideoDeviceId: (id) => set({ videoDeviceId: id }),
     }),
     {
       name: "camera-store",
@@ -42,6 +46,7 @@ export const useCameraStore = create<CameraStore>()(
         photos: state.photos,
         activeFilterId: state.activeFilterId,
         flashEnabled: state.flashEnabled,
+        videoDeviceId: state.videoDeviceId,
       }),
     },
   ),
