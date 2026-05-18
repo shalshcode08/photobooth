@@ -162,7 +162,7 @@
      follows the block axis (horizontal here = thickness). */
   inline-size: 86px;
   block-size: 14px;
-  width: 14px;       /* fallback for older engines that ignore logical props */
+  width: 14px; /* fallback for older engines that ignore logical props */
   height: 86px;
   margin: 0;
   padding: 0;
@@ -191,8 +191,8 @@
    (the long dimension), so we treat the values the same as the horizontal
    case — modern Blink + Gecko translate them correctly. */
 .retro-zoom-slider::-webkit-slider-runnable-track {
-  inline-size: 100%;   /* fill the slider's long axis (vertical) */
-  block-size: 4px;     /* track thickness on the cross axis (horizontal) */
+  inline-size: 100%; /* fill the slider's long axis (vertical) */
+  block-size: 4px; /* track thickness on the cross axis (horizontal) */
   background: linear-gradient(to bottom, #0a0a0a, #2a2a2a 50%, #0a0a0a);
   border-radius: 2px;
   box-shadow:
@@ -210,17 +210,16 @@
     0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
-/* Thumb sized for a vertical slider: 12px across the track, 18px along it.
-   The grip lines run perpendicular to travel for a classic camcorder feel. */
+/* Thumb sized for a vertical slider: wider across the track, shorter along it.
+   The grip reads as a horizontal rocker crossing the vertical slot. */
 .retro-zoom-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  /* Thumb runs along the slider's inline axis (vertical), so inline-size is
-     the longer dimension and block-size is the cross-axis (horizontal). */
-  inline-size: 18px;
-  block-size: 12px;
-  width: 12px;
-  height: 18px;
+  inline-size: 12px;
+  block-size: 20px;
+  width: 20px;
+  height: 12px;
+  transform: translateX(-8px);
   background:
     repeating-linear-gradient(
       to right,
@@ -237,10 +236,11 @@
 }
 
 .retro-zoom-slider::-moz-range-thumb {
-  inline-size: 18px;
-  block-size: 12px;
-  width: 12px;
-  height: 18px;
+  inline-size: 12px;
+  block-size: 20px;
+  width: 20px;
+  height: 12px;
+  transform: translateX(-8px);
   background:
     repeating-linear-gradient(
       to right,
