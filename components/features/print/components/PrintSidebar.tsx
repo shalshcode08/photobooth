@@ -13,43 +13,62 @@ import {
   COLLAPSED_COLOR_COUNT,
   DATE_TIME_OPTIONS,
   PHOTO_SHAPES,
+  STAMP_POSITION_OPTIONS,
+  STAMP_STYLE_OPTIONS,
   STRIP_COLORS,
 } from "../constants";
 import { backgroundStyle } from "../lib/print-style";
 import type {
   DateTimeMode,
   PhotoShape,
+  PrintLayoutId,
   PrintLayoutMeta,
+  StampPosition,
+  StampStyle,
   StripColor,
 } from "../types";
 
 type PrintSidebarProps = {
   layoutMeta: PrintLayoutMeta;
+  layoutId: PrintLayoutId;
   selectedColor: StripColor;
   customColor: string;
   showAllColors: boolean;
   shape: PhotoShape;
   dateTimeMode: DateTimeMode;
+  stampStyle: StampStyle;
+  stampPosition: StampPosition;
   onColorChange: (color: StripColor) => void;
   onCustomColorChange: (color: string) => void;
   onShowAllColorsChange: (showAll: boolean) => void;
   onShapeChange: (shape: PhotoShape) => void;
   onDateTimeModeChange: (mode: DateTimeMode) => void;
+  onStampStyleChange: (style: StampStyle) => void;
+  onStampPositionChange: (position: StampPosition) => void;
 };
 
 export function PrintSidebar({
   layoutMeta,
+  layoutId,
   selectedColor,
   customColor,
   showAllColors,
   shape,
   dateTimeMode,
+  stampStyle,
+  stampPosition,
   onColorChange,
   onCustomColorChange,
   onShowAllColorsChange,
   onShapeChange,
   onDateTimeModeChange,
+  onStampStyleChange,
+  onStampPositionChange,
 }: PrintSidebarProps) {
+  const showPositionPicker =
+    layoutId === "polaroid" &&
+    stampStyle === "handwritten" &&
+    dateTimeMode !== "none";
   const visibleStripColors = showAllColors
     ? STRIP_COLORS
     : STRIP_COLORS.slice(0, COLLAPSED_COLOR_COUNT);
@@ -109,6 +128,18 @@ export function PrintSidebar({
               selectedMode={dateTimeMode}
               onDateTimeModeChange={onDateTimeModeChange}
             />
+            {dateTimeMode !== "none" && (
+              <StampStyleControls
+                selectedStyle={stampStyle}
+                onStampStyleChange={onStampStyleChange}
+              />
+            )}
+            {showPositionPicker && (
+              <StampPositionControls
+                selectedPosition={stampPosition}
+                onStampPositionChange={onStampPositionChange}
+              />
+            )}
             <StickerPlaceholder />
           </div>
         </CardContent>
@@ -270,6 +301,80 @@ function DateTimeControls({
             >
               <Icon className="h-4 w-4" />
               <span className="hidden sm:inline">{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function StampStyleControls({
+  selectedStyle,
+  onStampStyleChange,
+}: {
+  selectedStyle: StampStyle;
+  onStampStyleChange: (style: StampStyle) => void;
+}) {
+  return (
+    <section>
+      <h2 className="text-sm font-semibold text-foreground">Stamp style</h2>
+      <div className="mt-2 grid grid-cols-2 gap-1.5">
+        {STAMP_STYLE_OPTIONS.map((option) => {
+          const Icon = option.icon;
+          const isSelected = selectedStyle === option.id;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => onStampStyleChange(option.id)}
+              aria-pressed={isSelected}
+              className={cn(
+                "flex h-9 items-center justify-center gap-2 border px-2 text-xs font-medium transition-all active:scale-[0.98] sm:h-10",
+                isSelected
+                  ? "border-primary bg-primary/5 text-foreground"
+                  : "border-border bg-background/60 text-muted-foreground hover:border-muted-foreground/50",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function StampPositionControls({
+  selectedPosition,
+  onStampPositionChange,
+}: {
+  selectedPosition: StampPosition;
+  onStampPositionChange: (position: StampPosition) => void;
+}) {
+  return (
+    <section>
+      <h2 className="text-sm font-semibold text-foreground">Stamp position</h2>
+      <div className="mt-2 grid grid-cols-5 gap-1.5">
+        {STAMP_POSITION_OPTIONS.map((option) => {
+          const Icon = option.icon;
+          const isSelected = selectedPosition === option.id;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => onStampPositionChange(option.id)}
+              aria-pressed={isSelected}
+              title={option.label}
+              className={cn(
+                "flex h-9 items-center justify-center border text-[10px] font-medium transition-all active:scale-[0.98] sm:h-10",
+                isSelected
+                  ? "border-primary bg-primary/5 text-foreground"
+                  : "border-border bg-background/60 text-muted-foreground hover:border-muted-foreground/50",
+              )}
+            >
+              <Icon className="h-4 w-4" />
             </button>
           );
         })}

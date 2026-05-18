@@ -1,16 +1,25 @@
 import {
+  AlignHorizontalJustifyCenter,
+  ArrowDownLeft,
+  ArrowDownRight,
+  ArrowUpLeft,
+  ArrowUpRight,
   CalendarDays,
   Circle,
   Clock3,
   Heart,
+  PenLine,
   Square,
   Star,
+  Type,
 } from "lucide-react";
 import type {
   DateTimeMode,
   PhotoShape,
   PrintLayoutId,
   PrintLayoutMeta,
+  StampPosition,
+  StampStyle,
   StripColor,
 } from "./types";
 
@@ -248,3 +257,39 @@ export const DATE_TIME_OPTIONS: Array<{
   { id: "time", label: "Time", icon: Clock3 },
   { id: "both", label: "Both", icon: Clock3 },
 ];
+
+export const STAMP_STYLE_OPTIONS: Array<{
+  id: StampStyle;
+  label: string;
+  icon: typeof CalendarDays;
+}> = [
+  { id: "printed", label: "Printed", icon: Type },
+  { id: "handwritten", label: "Marker", icon: PenLine },
+];
+
+// Default stamp style per layout. Polaroids look most natural with a
+// handwritten marker date in the bottom border — everything else gets the
+// small printed caption to match the existing aesthetic.
+export const DEFAULT_STAMP_STYLE: Record<PrintLayoutId, StampStyle> = {
+  "strip-vertical": "printed",
+  "strip-horizontal": "printed",
+  "grid-mixed": "printed",
+  polaroid: "handwritten",
+  duo: "printed",
+};
+
+// Placement options for a handwritten polaroid stamp. "border" is the iconic
+// bottom-white-space write; the four corners drop ink directly on the photo.
+export const STAMP_POSITION_OPTIONS: Array<{
+  id: StampPosition;
+  label: string;
+  icon: typeof CalendarDays;
+}> = [
+  { id: "border", label: "Border", icon: AlignHorizontalJustifyCenter },
+  { id: "photo-top-left", label: "Top left", icon: ArrowUpLeft },
+  { id: "photo-top-right", label: "Top right", icon: ArrowUpRight },
+  { id: "photo-bottom-left", label: "Bottom left", icon: ArrowDownLeft },
+  { id: "photo-bottom-right", label: "Bottom right", icon: ArrowDownRight },
+];
+
+export const DEFAULT_STAMP_POSITION: StampPosition = "border";

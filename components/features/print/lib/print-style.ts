@@ -29,6 +29,15 @@ export function isDarkBackground(background: string) {
   return average < 0.42;
 }
 
+// Saturated "ink" tone for handwritten stamps. Slightly more opaque and more
+// pigmented than the printed-text color so the marker reads clearly on top of
+// patterned strip backgrounds.
+export function handwrittenInkColor(background: string) {
+  return isDarkBackground(background)
+    ? "rgba(250, 245, 230, 0.92)" // warm cream marker on dark strips
+    : "rgba(20, 28, 50, 0.88)";   // dark navy marker on light strips
+}
+
 export function backgroundStyle(
   background: string,
   backgroundSize?: string,

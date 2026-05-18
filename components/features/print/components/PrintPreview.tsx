@@ -3,7 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { backgroundStyle } from "../lib/print-style";
-import type { PhotoShape, PrintLayoutId } from "../types";
+import type {
+  PhotoShape,
+  PrintLayoutId,
+  StampPosition,
+  StampStyle,
+} from "../types";
 
 type PrintPreviewProps = {
   layout: PrintLayoutId;
@@ -11,9 +16,18 @@ type PrintPreviewProps = {
   shape: PhotoShape;
   stamp: string;
   stampColor: string;
+  stampStyle: StampStyle;
+  stampPosition: StampPosition;
   stripBackground: string;
   stripBackgroundSize?: string;
 };
+
+// Whether the stamp should be drawn inside the layout itself (e.g. in the
+// bottom white border of a polaroid or directly on top of the photo) rather
+// than appended below the strip.
+function isStampEmbedded(layout: PrintLayoutId, style: StampStyle) {
+  return layout === "polaroid" && style === "handwritten";
+}
 
 export function PrintPreview({
   layout,
@@ -21,9 +35,12 @@ export function PrintPreview({
   shape,
   stamp,
   stampColor,
+  stampStyle,
+  stampPosition,
   stripBackground,
   stripBackgroundSize,
 }: PrintPreviewProps) {
+  const stampEmbedded = isStampEmbedded(layout, stampStyle);
   // Each layout is scaled so its natural aspect ratio fills the canvas height
   // similarly to the vertical strip (which already looked correctly sized).
   // Wide layouts (strip-horizontal, grid-mixed) take the full canvas width and
@@ -61,17 +78,32 @@ export function PrintPreview({
             >
               <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(255,255,255,0.38),transparent_34%,rgba(0,0,0,0.08))] mix-blend-soft-light" />
               <div className="relative">
-                <PreviewLayout layout={layout} photos={photos} shape={shape} />
+                <PreviewLayout
+                  layout={layout}
+                  photos={photos}
+                  shape={shape}
+                  stampPosition={stampPosition}
+                  embeddedStamp={
+                    stampEmbedded && stamp ? (
+                      <Stamp
+                        text={stamp}
+                        style={stampStyle}
+                        color={stampColor}
+                        placement={stampPosition === "border" ? "embedded" : "on-photo"}
+                      />
+                    ) : null
+                  }
+                />
               </div>
 
-              {stamp && (
-                <div className="relative mt-2 h-4 overflow-hidden sm:mt-3 sm:h-5">
-                  <div
-                    className="absolute inset-0 flex min-w-0 items-center justify-center overflow-hidden whitespace-nowrap text-center font-mono text-[9px] font-semibold uppercase leading-none tracking-[0.08em] sm:text-[10px]"
-                    style={{ color: stampColor }}
-                  >
-                    {stamp}
-                  </div>
+              {stamp && !stampEmbedded && (
+                <div className="relative mt-2 overflow-hidden sm:mt-3">
+                  <Stamp
+                    text={stamp}
+                    style={stampStyle}
+                    color={stampColor}
+                    placement="below"
+                  />
                 </div>
               )}
             </div>
@@ -82,14 +114,30 @@ export function PrintPreview({
   );
 }
 
+// Corner classes for absolute-positioned handwritten stamps that sit on top of
+// the photo. Keyed by StampPosition so adding new positions stays mechanical.
+const PHOTO_CORNER_CLASS: Record<
+  Exclude<StampPosition, "border">,
+  string
+> = {
+  "photo-top-left": "left-2 top-2",
+  "photo-top-right": "right-2 top-2",
+  "photo-bottom-left": "bottom-2 left-2",
+  "photo-bottom-right": "bottom-2 right-2",
+};
+
 function PreviewLayout({
   layout,
   photos,
   shape,
+  embeddedStamp,
+  stampPosition,
 }: {
   layout: PrintLayoutId;
   photos: Array<string | null>;
   shape: PhotoShape;
+  embeddedStamp?: React.ReactNode;
+  stampPosition: StampPosition;
 }) {
   if (layout === "strip-horizontal") {
     return (
@@ -111,9 +159,32 @@ function PreviewLayout({
   }
 
   if (layout === "polaroid") {
+    // Polaroid has two valid spots for the embedded stamp:
+    //   1. The bottom white border (classic "written under the photo" look)
+    //   2. One of the four photo corners — handwriting directly on the print
+    // The bottom border row is always present so the polaroid keeps its
+    // signature height regardless of where the stamp is drawn.
+    const cornerStamp =
+      stampPosition !== "border" ? (
+        <div
+          className={cn(
+            "pointer-events-none absolute z-10",
+            PHOTO_CORNER_CLASS[stampPosition],
+          )}
+        >
+          {embeddedStamp}
+        </div>
+      ) : null;
+
     return (
-      <div className="grid w-full grid-cols-1 pb-10">
-        {renderPhoto(photos[0] ?? null, 0, shape)}
+      <div className="flex w-full flex-col">
+        <div className="relative">
+          {renderPhoto(photos[0] ?? null, 0, shape)}
+          {cornerStamp}
+        </div>
+        <div className="flex h-10 items-center justify-center px-2">
+          {stampPosition === "border" ? embeddedStamp : null}
+        </div>
       </div>
     );
   }
@@ -122,6 +193,63 @@ function PreviewLayout({
     <div className="grid w-full grid-cols-1 items-stretch gap-2">
       {photos.map((src, index) => renderPhoto(src, index, shape))}
     </div>
+  );
+}
+
+// Visual treatment for the date/time stamp.
+//   - "printed":  monospace caption (legacy look)
+//   - "handwritten": marker font with a slight tilt + ink-bleed via text-shadow
+//
+// `placement` controls scale and the strength of the shadow:
+//   - "below":     compact caption sitting below the strip
+//   - "embedded":  inside the polaroid bottom border
+//   - "on-photo":  drawn over the photo — bumps text-shadow for legibility
+//                  against arbitrary photo backgrounds
+type StampPlacement = "below" | "embedded" | "on-photo";
+
+function Stamp({
+  text,
+  style,
+  color,
+  placement,
+}: {
+  text: string;
+  style: StampStyle;
+  color: string;
+  placement: StampPlacement;
+}) {
+  if (style === "handwritten") {
+    const sizeClass =
+      placement === "below"
+        ? "text-[clamp(0.75rem,1.6dvh,1.1rem)]"
+        : "text-[clamp(0.9rem,2dvh,1.35rem)]";
+    // Photo backgrounds are unpredictable, so we layer a soft glow behind the
+    // ink to keep it legible whether it lands on a bright or dark area.
+    const textShadow =
+      placement === "on-photo"
+        ? "0 1px 2px rgba(255,255,255,0.55), 0 0 6px rgba(255,255,255,0.35), 0 0 0.4px currentColor"
+        : "0 0 0.4px currentColor, 0 0 0.8px currentColor";
+    return (
+      <span
+        className={cn(
+          "inline-block whitespace-nowrap font-marker leading-none tracking-wide",
+          "-rotate-[2.5deg]",
+          sizeClass,
+        )}
+        style={{ color, textShadow }}
+      >
+        {text}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="block whitespace-nowrap text-center font-mono text-[9px] font-semibold uppercase leading-none tracking-[0.08em] sm:text-[10px]"
+      style={{ color }}
+    >
+      {text}
+    </span>
   );
 }
 

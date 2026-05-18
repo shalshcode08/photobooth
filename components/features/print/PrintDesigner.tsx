@@ -1,13 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { PHOTO_SHAPES, PRINT_LAYOUT_META, STRIP_COLORS } from "./constants";
+import {
+  DEFAULT_STAMP_POSITION,
+  DEFAULT_STAMP_STYLE,
+  PHOTO_SHAPES,
+  PRINT_LAYOUT_META,
+  STRIP_COLORS,
+} from "./constants";
 import { PrintClipDefs } from "./components/PrintClipDefs";
 import { PrintPreview } from "./components/PrintPreview";
 import { PrintSidebar } from "./components/PrintSidebar";
 import { useSelectedPhotos } from "./hooks/use-selected-photos";
-import { formatStamp, isDarkBackground } from "./lib/print-style";
-import type { DateTimeMode, PrintDesignerProps } from "./types";
+import {
+  formatStamp,
+  handwrittenInkColor,
+  isDarkBackground,
+} from "./lib/print-style";
+import type {
+  DateTimeMode,
+  PrintDesignerProps,
+  StampPosition,
+  StampStyle,
+} from "./types";
 
 export default function PrintDesigner({
   initialLayout,
@@ -21,15 +36,24 @@ export default function PrintDesigner({
   const [showAllColors, setShowAllColors] = useState(false);
   const [shape, setShape] = useState(PHOTO_SHAPES[0]);
   const [dateTimeMode, setDateTimeMode] = useState<DateTimeMode>("date");
+  const [stampStyle, setStampStyle] = useState<StampStyle>(
+    DEFAULT_STAMP_STYLE[initialLayout],
+  );
+  const [stampPosition, setStampPosition] = useState<StampPosition>(
+    DEFAULT_STAMP_POSITION,
+  );
 
   const stripBackground =
     selectedColor.id === "custom" ? customColor : selectedColor.value;
   const stripBackgroundSize =
     selectedColor.id === "custom" ? undefined : selectedColor.backgroundSize;
   const stamp = formatStamp(dateTimeMode, generatedAt);
-  const stampColor = isDarkBackground(stripBackground)
-    ? "rgba(255,255,255,0.78)"
-    : "rgba(0,0,0,0.62)";
+  const stampColor =
+    stampStyle === "handwritten"
+      ? handwrittenInkColor(stripBackground)
+      : isDarkBackground(stripBackground)
+        ? "rgba(255,255,255,0.78)"
+        : "rgba(0,0,0,0.62)";
 
   return (
     <main className="print-page-surface h-dvh overflow-hidden">
@@ -39,10 +63,13 @@ export default function PrintDesigner({
         <PrintSidebar
           customColor={customColor}
           dateTimeMode={dateTimeMode}
+          layoutId={initialLayout}
           layoutMeta={layoutMeta}
           selectedColor={selectedColor}
           shape={shape}
           showAllColors={showAllColors}
+          stampPosition={stampPosition}
+          stampStyle={stampStyle}
           onColorChange={setSelectedColor}
           onCustomColorChange={(color) => {
             setCustomColor(color);
@@ -55,6 +82,8 @@ export default function PrintDesigner({
           onDateTimeModeChange={setDateTimeMode}
           onShapeChange={setShape}
           onShowAllColorsChange={setShowAllColors}
+          onStampPositionChange={setStampPosition}
+          onStampStyleChange={setStampStyle}
         />
 
         <PrintPreview
@@ -63,6 +92,8 @@ export default function PrintDesigner({
           shape={shape}
           stamp={stamp}
           stampColor={stampColor}
+          stampPosition={stampPosition}
+          stampStyle={stampStyle}
           stripBackground={stripBackground}
           stripBackgroundSize={stripBackgroundSize}
         />

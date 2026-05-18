@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { Geist, Geist_Mono, Permanent_Marker, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -18,6 +18,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// Marker-style face used for handwritten date/time stamps on prints.
+const permanentMarker = Permanent_Marker({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-marker",
 });
 
 export const metadata: Metadata = {
@@ -41,6 +48,7 @@ export default function RootLayout({
         geistSans.variable,
         geistMono.variable,
         spaceGroteskHeading.variable,
+        permanentMarker.variable,
       )}
     >
       <body className="min-h-full flex flex-col">
