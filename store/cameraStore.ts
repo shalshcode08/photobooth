@@ -15,7 +15,12 @@ interface CameraStore {
   setFlashEnabled: (enabled: boolean) => void;
   videoDeviceId: string | null;
   setVideoDeviceId: (id: string | null) => void;
+  zoom: number;
+  setZoom: (zoom: number) => void;
 }
+
+export const MIN_ZOOM = 1;
+export const MAX_ZOOM = 3;
 
 export const useCameraStore = create<CameraStore>()(
   persist(
@@ -37,6 +42,9 @@ export const useCameraStore = create<CameraStore>()(
       setFlashEnabled: (enabled) => set({ flashEnabled: enabled }),
       videoDeviceId: null,
       setVideoDeviceId: (id) => set({ videoDeviceId: id }),
+      zoom: 1,
+      setZoom: (zoom) =>
+        set({ zoom: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom)) }),
     }),
     {
       name: "camera-store",
@@ -47,6 +55,7 @@ export const useCameraStore = create<CameraStore>()(
         activeFilterId: state.activeFilterId,
         flashEnabled: state.flashEnabled,
         videoDeviceId: state.videoDeviceId,
+        zoom: state.zoom,
       }),
     },
   ),

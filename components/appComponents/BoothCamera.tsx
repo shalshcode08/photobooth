@@ -9,6 +9,7 @@ import { MAX_PHOTOS, useCameraStore } from "@/store/cameraStore";
 import FilterSelector from "@/components/appComponents/FilterSelector";
 import PrintLayoutModal from "@/components/appComponents/PrintLayoutModal";
 import CameraDeviceSelector from "@/components/appComponents/CameraDeviceSelector";
+import ZoomSlider from "@/components/appComponents/ZoomSlider";
 import P5VideoFilter, {
   type P5FilterHandle,
 } from "@/components/appComponents/P5VideoFilter";
@@ -127,7 +128,7 @@ export default function BoothCamera() {
   const wantCameraRef = useRef(false);   // flipped to false by stopCamera so an
                                          // in-flight getUserMedia aborts on resolve
 
-  const { enabled, setEnabled, activeFilterId, addPhoto, photos, flashEnabled, setFlashEnabled, videoDeviceId, setVideoDeviceId } = useCameraStore();
+  const { enabled, setEnabled, activeFilterId, addPhoto, photos, flashEnabled, setFlashEnabled, videoDeviceId, setVideoDeviceId, zoom } = useCameraStore();
   const remainingSlots = MAX_PHOTOS - photos.length;
   const atMaxPhotos    = remainingSlots <= 0;
   const [screenFlashPhase, setScreenFlashPhase] = useState<"off"|"hold"|"fade">("off");
@@ -358,6 +359,14 @@ export default function BoothCamera() {
           <CameraDeviceSelector />
         </div>
 
+        {/* Retro zoom slider — floats just outside the left edge of the
+            viewfinder on desktop. On smaller screens it overlays the very
+            left edge of the viewfinder so it stays reachable without taking
+            extra vertical room. */}
+        <div className="absolute left-2 top-1/2 z-10 -translate-y-1/2 lg:left-auto lg:right-full lg:mr-3">
+          <ZoomSlider />
+        </div>
+
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border bg-muted shadow-[0_18px_55px_rgba(64,40,20,0.16)] sm:rounded-xl">
           {/* Raw video — hidden under the p5 canvas overlay */}
           <video
@@ -374,6 +383,7 @@ export default function BoothCamera() {
             videoRef={videoRef}
             filter={activeFilter}
             active={enabled}
+            zoom={zoom}
           />
 
           {/* Camera-off placeholder */}

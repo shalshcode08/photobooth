@@ -12,6 +12,9 @@ interface Props {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   filter: FilterDef;
   active: boolean;
+  // Digital zoom factor — 1 means the standard 4:3 crop, higher values shrink
+  // the source-video crop window to a smaller centered region (zooming in).
+  zoom?: number;
 }
 
 // ── One-time grain texture ─────────────────────────────────────────────────────
@@ -383,15 +386,17 @@ function drawStamp(
 
 // ── Component ─────────────────────────────────────────────────────────────────
 const P5VideoFilter = forwardRef<P5FilterHandle, Props>(
-  ({ videoRef, filter, active }, ref) => {
+  ({ videoRef, filter, active, zoom = 1 }, ref) => {
     const mountRef     = useRef<HTMLDivElement>(null);
     const canvasRef    = useRef<HTMLCanvasElement | null>(null);
     const grainRef     = useRef<HTMLCanvasElement | null>(null);
     const halCanvasRef = useRef<HTMLCanvasElement | null>(null);   // offscreen for halation blur
     const filterRef    = useRef(filter);
     const activeRef    = useRef(active);
+    const zoomRef      = useRef(zoom);
     filterRef.current  = filter;
     activeRef.current  = active;
+    zoomRef.current    = zoom;
 
     useImperativeHandle(ref, () => ({
       getCanvas: () => canvasRef.current,
@@ -442,11 +447,23 @@ const P5VideoFilter = forwardRef<P5FilterHandle, Props>(
             // Object-cover crop to 4:3 — matches the CSS aspect-[4/3] container
             const TARGET = 4 / 3;
             const va = vw / vh;
-            let sx = 0, sy = 0, sw = vw, sh = vh;
-            if (va > TARGET) { sw = vh * TARGET; sx = (vw - sw) / 2; }
-            else if (va < TARGET) { sh = vw / TARGET; sy = (vh - sh) / 2; }
+            let sw = vw, sh = vh;
+            if (va > TARGET) { sw = vh * TARGET; }
+            else if (va < TARGET) { sh = vw / TARGET; }
+
+            // Digital zoom — shrink the crop window around the center. The
+            // canvas resolution stays the same (drawImage stretches the
+            // smaller source region to fill it), so anything ≥ 1× behaves
+            // like a zoom-in. The destination canvas (cw, ch) is computed
+            // from the unzoomed crop so the canvas dimensions stay stable
+            // across zoom changes — only the source rect shrinks.
             const cw = Math.round(sw);
             const ch = Math.round(sh);
+            const z = Math.max(1, zoomRef.current);
+            sw = sw / z;
+            sh = sh / z;
+            const sx = (vw - sw) / 2;
+            const sy = (vh - sh) / 2;
             if (p.width !== cw || p.height !== ch) p.resizeCanvas(cw, ch, true);
 
             const ctx = p.drawingContext as CanvasRenderingContext2D;
